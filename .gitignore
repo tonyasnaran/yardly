@@ -17,4 +17,34 @@ __pycache__/
 
 # OS
 .DS_Store
-Thumbs.db 
+Thumbs.db
+
+# next.js
+/.next/
+/out/
+.next/trace
+
+# production
+/build
+
+# misc
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# testing
+/coverage
+
+# dependencies
+/.pnp
+.pnp.js 

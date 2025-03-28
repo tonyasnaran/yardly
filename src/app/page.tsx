@@ -6,7 +6,6 @@ import {
   Toolbar,
   Typography,
   Container,
-  Grid,
   Card,
   CardContent,
   CardMedia,
@@ -18,7 +17,11 @@ import {
   InputLabel,
   Button,
   CircularProgress,
+  CardActionArea,
+  Rating,
 } from '@mui/material';
+import LocationOn from '@mui/icons-material/LocationOn';
+import { useRouter } from 'next/navigation';
 
 interface Yard {
   id: number;
@@ -28,6 +31,7 @@ interface Yard {
   guests: number;
   image: string;
   amenities: string[];
+  rating?: number;
 }
 
 export default function Home() {
@@ -36,6 +40,7 @@ export default function Home() {
   const [amenities, setAmenities] = useState('');
   const [yards, setYards] = useState<Yard[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     fetchYards();
@@ -63,6 +68,10 @@ export default function Home() {
     fetchYards();
   };
 
+  const handleYardClick = (id: number) => {
+    router.push(`/yards/${id}`);
+  };
+
   return (
     <Box>
       <AppBar position="static" color="primary">
@@ -76,16 +85,16 @@ export default function Home() {
       <Container maxWidth="lg" sx={{ mt: 4 }}>
         {/* Search Section */}
         <Box sx={{ mb: 4 }}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={3}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+            <Box sx={{ flexGrow: 1, minWidth: { xs: '100%', md: '23%' } }}>
               <TextField
                 fullWidth
                 label="City"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
               />
-            </Grid>
-            <Grid item xs={12} md={3}>
+            </Box>
+            <Box sx={{ flexGrow: 1, minWidth: { xs: '100%', md: '23%' } }}>
               <FormControl fullWidth>
                 <InputLabel>Guest Limit</InputLabel>
                 <Select
@@ -99,8 +108,8 @@ export default function Home() {
                   <MenuItem value="20">Up to 20 guests</MenuItem>
                 </Select>
               </FormControl>
-            </Grid>
-            <Grid item xs={12} md={3}>
+            </Box>
+            <Box sx={{ flexGrow: 1, minWidth: { xs: '100%', md: '23%' } }}>
               <FormControl fullWidth>
                 <InputLabel>Amenities</InputLabel>
                 <Select
@@ -114,8 +123,8 @@ export default function Home() {
                   <MenuItem value="playground">Playground</MenuItem>
                 </Select>
               </FormControl>
-            </Grid>
-            <Grid item xs={12} md={3}>
+            </Box>
+            <Box sx={{ flexGrow: 1, minWidth: { xs: '100%', md: '23%' } }}>
               <Button
                 fullWidth
                 variant="contained"
@@ -126,52 +135,83 @@ export default function Home() {
               >
                 {loading ? <CircularProgress size={24} /> : 'Search'}
               </Button>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </Box>
 
         {/* Yard Listings */}
-        <Grid container spacing={3}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
           {yards.map((yard) => (
-            <Grid item xs={12} sm={6} md={4} key={yard.id}>
-              <Card>
-                <CardMedia
-                  component="img"
-                  height="200"
-                  image={yard.image}
-                  alt={yard.title}
-                />
-                <CardContent>
-                  <Typography gutterBottom variant="h5" component="div">
-                    {yard.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {yard.city}
-                  </Typography>
-                  <Typography variant="h6" color="primary" sx={{ mt: 1 }}>
-                    ${yard.price}/hour
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Up to {yard.guests} guests
-                  </Typography>
-                  <Box sx={{ mt: 1 }}>
-                    {yard.amenities.map((amenity, index) => (
-                      <Typography
-                        key={index}
-                        variant="body2"
-                        color="text.secondary"
-                        component="span"
-                        sx={{ mr: 1 }}
-                      >
-                        • {amenity}
+            <Box key={yard.id} sx={{ width: { xs: '100%', sm: 'calc(50% - 24px)', md: 'calc(33.33% - 24px)' } }}>
+              <Card 
+                sx={{ 
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: 6,
+                  },
+                }}
+              >
+                <CardActionArea onClick={() => handleYardClick(yard.id)}>
+                  <CardMedia
+                    component="img"
+                    height="200"
+                    image={yard.image}
+                    alt={yard.title}
+                  />
+                  <CardContent>
+                    <Typography gutterBottom variant="h5" component="div">
+                      {yard.title}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <LocationOn sx={{ color: 'text.secondary', mr: 0.5 }} fontSize="small" />
+                      <Typography variant="body2" color="text.secondary">
+                        {yard.city}
                       </Typography>
-                    ))}
-                  </Box>
-                </CardContent>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <Rating value={yard.rating || 4.5} precision={0.5} size="small" readOnly />
+                      <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                        ({yard.rating || 4.5})
+                      </Typography>
+                    </Box>
+                    <Typography variant="h6" color="primary" sx={{ mt: 1 }}>
+                      ${yard.price}/hour
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Up to {yard.guests} guests
+                    </Typography>
+                    <Box sx={{ mt: 1 }}>
+                      {yard.amenities.slice(0, 3).map((amenity, index) => (
+                        <Typography
+                          key={index}
+                          variant="body2"
+                          color="text.secondary"
+                          component="span"
+                          sx={{ mr: 1 }}
+                        >
+                          • {amenity}
+                        </Typography>
+                      ))}
+                      {yard.amenities.length > 3 && (
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          component="span"
+                        >
+                          • +{yard.amenities.length - 3} more
+                        </Typography>
+                      )}
+                    </Box>
+                  </CardContent>
+                </CardActionArea>
               </Card>
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
       </Container>
     </Box>
   );

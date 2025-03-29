@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 // Mock data for initial development
 const mockYards = [
@@ -22,7 +22,7 @@ const mockYards = [
   },
 ];
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const city = searchParams.get('city');
   const guests = searchParams.get('guests');

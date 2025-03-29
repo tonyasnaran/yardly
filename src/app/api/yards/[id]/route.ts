@@ -31,7 +31,7 @@ const mockYards = [
 ];
 
 export async function GET(
-  request: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {

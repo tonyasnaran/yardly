@@ -19,7 +19,6 @@ import {
   CircularProgress,
   CardActionArea,
   Rating,
-  Grid,
   Skeleton,
   Alert,
 } from '@mui/material';
@@ -146,78 +145,75 @@ export default function Home() {
         </Box>
 
         {/* Yard Listings */}
-        <Grid container spacing={3}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 3 }}>
           {loading ? (
             // Loading state
             Array.from({ length: 3 }).map((_, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
-                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                  <Skeleton variant="rectangular" height={200} />
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Skeleton variant="text" height={32} />
-                    <Skeleton variant="text" height={24} />
-                    <Skeleton variant="text" height={24} />
-                  </CardContent>
-                </Card>
-              </Grid>
+              <Card key={index} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Skeleton variant="rectangular" height={200} />
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Skeleton variant="text" height={32} />
+                  <Skeleton variant="text" height={24} />
+                  <Skeleton variant="text" height={24} />
+                </CardContent>
+              </Card>
             ))
           ) : error ? (
             // Error state
-            <Grid item xs={12}>
+            <Box sx={{ gridColumn: '1 / -1' }}>
               <Alert severity="error" sx={{ mt: 2 }}>
                 {error}
               </Alert>
-            </Grid>
+            </Box>
           ) : yards.length === 0 ? (
             // Empty state
-            <Grid item xs={12}>
+            <Box sx={{ gridColumn: '1 / -1' }}>
               <Alert severity="info" sx={{ mt: 2 }}>
                 No yards found. Try adjusting your search filters.
               </Alert>
-            </Grid>
+            </Box>
           ) : (
             // Success state
             yards.map((yard) => (
-              <Grid item xs={12} sm={6} md={4} key={yard.id}>
-                <Card 
-                  sx={{ 
-                    height: '100%', 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      transition: 'transform 0.2s ease-in-out',
-                      boxShadow: 3
-                    }
-                  }}
-                  onClick={() => router.push(`/yards/${yard.id}`)}
-                >
-                  <CardMedia
-                    component="img"
-                    height="200"
-                    image={yard.image}
-                    alt={yard.title}
-                  />
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography gutterBottom variant="h6" component="h2">
-                      {yard.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                      {yard.city}
-                    </Typography>
-                    <Typography variant="h6" color="primary">
-                      ${yard.price}/hour
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Up to {yard.guests} guests
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
+              <Card 
+                key={yard.id}
+                sx={{ 
+                  height: '100%', 
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    transition: 'transform 0.2s ease-in-out',
+                    boxShadow: 3
+                  }
+                }}
+                onClick={() => router.push(`/yards/${yard.id}`)}
+              >
+                <CardMedia
+                  component="img"
+                  height="200"
+                  image={yard.image}
+                  alt={yard.title}
+                />
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Typography gutterBottom variant="h6" component="h2">
+                    {yard.title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    {yard.city}
+                  </Typography>
+                  <Typography variant="h6" color="primary">
+                    ${yard.price}/hour
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Up to {yard.guests} guests
+                  </Typography>
+                </CardContent>
+              </Card>
             ))
           )}
-        </Grid>
+        </Box>
       </Container>
     </Box>
   );

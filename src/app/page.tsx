@@ -19,6 +19,9 @@ import {
   CircularProgress,
   CardActionArea,
   Rating,
+  Grid,
+  Skeleton,
+  Alert,
 } from '@mui/material';
 import LocationOn from '@mui/icons-material/LocationOn';
 import { useRouter } from 'next/navigation';
@@ -40,28 +43,31 @@ export default function Home() {
   const [amenities, setAmenities] = useState('');
   const [yards, setYards] = useState<Yard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-
-  useEffect(() => {
-    fetchYards();
-  }, []);
 
   const fetchYards = async () => {
     try {
-      const params = new URLSearchParams();
-      if (city) params.append('city', city);
-      if (guests) params.append('guests', guests);
-      if (amenities) params.append('amenities', amenities);
-
-      const response = await fetch(`/api/yards?${params.toString()}`);
+      setLoading(true);
+      const response = await fetch('/api/yards');
+      if (!response.ok) {
+        throw new Error('Failed to fetch yards');
+      }
       const data = await response.json();
-      setYards(data);
-    } catch (error) {
-      console.error('Error fetching yards:', error);
+      // Ensure we're setting an array
+      setYards(Array.isArray(data.yards) ? data.yards : []);
+    } catch (err) {
+      console.error('Error fetching yards:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch yards');
+      setYards([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchYards();
+  }, []);
 
   const handleSearch = () => {
     setLoading(true);
@@ -140,78 +146,78 @@ export default function Home() {
         </Box>
 
         {/* Yard Listings */}
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-          {yards.map((yard) => (
-            <Box key={yard.id} sx={{ width: { xs: '100%', sm: 'calc(50% - 24px)', md: 'calc(33.33% - 24px)' } }}>
-              <Card 
-                sx={{ 
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: 6,
-                  },
-                }}
-              >
-                <CardActionArea onClick={() => handleYardClick(yard.id)}>
+        <Grid container spacing={3}>
+          {loading ? (
+            // Loading state
+            Array.from({ length: 3 }).map((_, index) => (
+              <Grid item xs={12} sm={6} md={4} key={index}>
+                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <Skeleton variant="rectangular" height={200} />
+                  <CardContent sx={{ flexGrow: 1 }}>
+                    <Skeleton variant="text" height={32} />
+                    <Skeleton variant="text" height={24} />
+                    <Skeleton variant="text" height={24} />
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))
+          ) : error ? (
+            // Error state
+            <Grid item xs={12}>
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {error}
+              </Alert>
+            </Grid>
+          ) : yards.length === 0 ? (
+            // Empty state
+            <Grid item xs={12}>
+              <Alert severity="info" sx={{ mt: 2 }}>
+                No yards found. Try adjusting your search filters.
+              </Alert>
+            </Grid>
+          ) : (
+            // Success state
+            yards.map((yard) => (
+              <Grid item xs={12} sm={6} md={4} key={yard.id}>
+                <Card 
+                  sx={{ 
+                    height: '100%', 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      transition: 'transform 0.2s ease-in-out',
+                      boxShadow: 3
+                    }
+                  }}
+                  onClick={() => router.push(`/yards/${yard.id}`)}
+                >
                   <CardMedia
                     component="img"
                     height="200"
                     image={yard.image}
                     alt={yard.title}
                   />
-                  <CardContent>
-                    <Typography gutterBottom variant="h5" component="div">
+                  <CardContent sx={{ flexGrow: 1 }}>
+                    <Typography gutterBottom variant="h6" component="h2">
                       {yard.title}
                     </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <LocationOn sx={{ color: 'text.secondary', mr: 0.5 }} fontSize="small" />
-                      <Typography variant="body2" color="text.secondary">
-                        {yard.city}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <Rating value={yard.rating || 4.5} precision={0.5} size="small" readOnly />
-                      <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                        ({yard.rating || 4.5})
-                      </Typography>
-                    </Box>
-                    <Typography variant="h6" color="primary" sx={{ mt: 1 }}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      {yard.city}
+                    </Typography>
+                    <Typography variant="h6" color="primary">
                       ${yard.price}/hour
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Up to {yard.guests} guests
                     </Typography>
-                    <Box sx={{ mt: 1 }}>
-                      {yard.amenities.slice(0, 3).map((amenity, index) => (
-                        <Typography
-                          key={index}
-                          variant="body2"
-                          color="text.secondary"
-                          component="span"
-                          sx={{ mr: 1 }}
-                        >
-                          • {amenity}
-                        </Typography>
-                      ))}
-                      {yard.amenities.length > 3 && (
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          component="span"
-                        >
-                          • +{yard.amenities.length - 3} more
-                        </Typography>
-                      )}
-                    </Box>
                   </CardContent>
-                </CardActionArea>
-              </Card>
-            </Box>
-          ))}
-        </Box>
+                </Card>
+              </Grid>
+            ))
+          )}
+        </Grid>
       </Container>
     </Box>
   );

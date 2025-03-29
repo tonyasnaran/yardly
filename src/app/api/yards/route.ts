@@ -1,33 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Mock data for initial development
-const mockYards = [
+// Mock data for development
+const yards = [
   {
-    id: "1",
-    title: 'Cozy Backyard Garden',
-    city: 'New York',
+    id: 1,
+    title: "Cozy Backyard Garden",
+    city: "New York",
     price: 50,
     guests: 10,
-    image: 'https://source.unsplash.com/random/400x300/?garden',
-    amenities: ['Grill', 'Fire Pit', 'Pool'],
-    description: 'A peaceful garden space perfect for intimate gatherings and outdoor dining. Features include a modern grill, cozy fire pit, and ambient lighting throughout the space.',
+    image: "https://source.unsplash.com/random/400x300/?garden",
+    amenities: ["Grill", "Fire Pit", "Pool"],
+    description: "A peaceful garden space perfect for intimate gatherings and outdoor dining. Features include a modern grill, cozy fire pit, and ambient lighting throughout the space.",
     rating: 4.8,
     reviews: 24,
-    nearbyAttractions: ['Central Park', 'Times Square', 'Empire State Building']
+    nearbyAttractions: ["Central Park", "Times Square", "Empire State Building"]
   },
   {
-    id: "2",
-    title: 'Spacious Lawn',
-    city: 'Los Angeles',
+    id: 2,
+    title: "Luxury Poolside Retreat",
+    city: "Los Angeles",
     price: 75,
     guests: 15,
-    image: 'https://source.unsplash.com/random/400x300/?lawn',
-    amenities: ['Grill', 'Fire Pit', 'Pool', 'Playground'],
-    description: 'A stunning outdoor space with panoramic city views. Perfect for pool parties and social events with a full outdoor kitchen and bar setup.',
+    image: "https://source.unsplash.com/random/400x300/?pool",
+    amenities: ["Pool", "Hot Tub", "Outdoor Kitchen"],
+    description: "A stunning outdoor space featuring a large pool, hot tub, and fully equipped outdoor kitchen. Perfect for summer gatherings and pool parties.",
     rating: 4.9,
-    reviews: 36,
-    nearbyAttractions: ['Hollywood Sign', 'Griffith Observatory', 'Santa Monica Pier']
-  },
+    reviews: 31,
+    nearbyAttractions: ["Hollywood Sign", "Griffith Observatory", "Santa Monica Pier"]
+  }
 ];
 
 export async function GET(request: NextRequest) {
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     const amenities = searchParams.get('amenities');
 
     // Filter yards based on search parameters
-    let filteredYards = [...mockYards];
+    let filteredYards = [...yards];
 
     if (city) {
       filteredYards = filteredYards.filter(yard => 

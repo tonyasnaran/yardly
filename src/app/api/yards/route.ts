@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // Mock data for initial development
 const mockYards = [
   {
-    id: 1,
+    id: "1",
     title: 'Cozy Backyard Garden',
     city: 'New York',
     price: 50,
@@ -12,7 +12,7 @@ const mockYards = [
     amenities: ['Grill', 'Fire Pit', 'Pool'],
   },
   {
-    id: 2,
+    id: "2",
     title: 'Spacious Lawn',
     city: 'Los Angeles',
     price: 75,
@@ -52,4 +52,4 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json(filteredYards);
-} 
+}

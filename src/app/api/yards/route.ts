@@ -31,33 +31,53 @@ const mockYards = [
 ];
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const city = searchParams.get('city');
-  const guests = searchParams.get('guests');
-  const amenities = searchParams.get('amenities');
+  try {
+    const { searchParams } = new URL(request.url);
+    const city = searchParams.get('city');
+    const guests = searchParams.get('guests');
+    const amenities = searchParams.get('amenities');
 
-  // Filter yards based on search parameters
-  let filteredYards = [...mockYards];
+    // Filter yards based on search parameters
+    let filteredYards = [...mockYards];
 
-  if (city) {
-    filteredYards = filteredYards.filter(yard => 
-      yard.city.toLowerCase().includes(city.toLowerCase())
+    if (city) {
+      filteredYards = filteredYards.filter(yard => 
+        yard.city.toLowerCase().includes(city.toLowerCase())
+      );
+    }
+
+    if (guests) {
+      const guestCount = parseInt(guests);
+      if (!isNaN(guestCount)) {
+        filteredYards = filteredYards.filter(yard => 
+          yard.guests >= guestCount
+        );
+      }
+    }
+
+    if (amenities) {
+      const amenityList = amenities.split(',').map(a => a.trim().toLowerCase());
+      filteredYards = filteredYards.filter(yard => 
+        yard.amenities.some(amenity => 
+          amenityList.includes(amenity.toLowerCase())
+        )
+      );
+    }
+
+    return NextResponse.json({
+      yards: filteredYards,
+      total: filteredYards.length,
+      filters: {
+        city: city || undefined,
+        guests: guests ? parseInt(guests) : undefined,
+        amenities: amenities ? amenities.split(',').map(a => a.trim()) : undefined
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching yards:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
     );
   }
-
-  if (guests) {
-    filteredYards = filteredYards.filter(yard => 
-      yard.guests >= parseInt(guests)
-    );
-  }
-
-  if (amenities) {
-    filteredYards = filteredYards.filter(yard => 
-      yard.amenities.some(amenity => 
-        amenity.toLowerCase().includes(amenities.toLowerCase())
-      )
-    );
-  }
-
-  return NextResponse.json(filteredYards);
 }

@@ -30,19 +30,41 @@ const mockYards = [
   },
 ];
 
+type RouteContext = {
+  params: {
+    id: string;
+  };
+};
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext
 ) {
   try {
-    const yard = mockYards.find(yard => yard.id === params.id);
+    const { id } = context.params;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Yard ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const yard = mockYards.find(yard => yard.id === id);
 
     if (!yard) {
-      return NextResponse.json({ error: 'Yard not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Yard not found' },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json(yard);
   } catch (error) {
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    console.error('Error fetching yard:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 } 

@@ -22,6 +22,7 @@ import GroupIcon from '@mui/icons-material/Group';
 import LocalActivityIcon from '@mui/icons-material/LocalActivity';
 import StarIcon from '@mui/icons-material/Star';
 import { useParams } from 'next/navigation';
+import Image from 'next/image';
 
 interface Yard {
   id: number;
@@ -90,15 +91,20 @@ export default function YardPage() {
             </Typography>
           </Box>
 
-          <Card sx={{ mb: 4 }}>
-            <CardMedia
-              component="img"
-              height="400"
-              image={yard.image}
-              alt={yard.title}
-              sx={{ objectFit: 'cover' }}
-            />
-          </Card>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 4, mb: 4 }}>
+            {/* Main content */}
+            <Box sx={{ flex: 2 }}>
+              <Box sx={{ position: 'relative', width: '100%', height: '400px', mb: 4 }}>
+                <Image
+                  src={yard.image}
+                  alt={yard.title}
+                  fill
+                  style={{ objectFit: 'cover' }}
+                  priority
+                />
+              </Box>
+            </Box>
+          </Box>
 
           <Box sx={{ mb: 4 }}>
             <Typography variant="h6" gutterBottom>

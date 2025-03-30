@@ -16,14 +16,14 @@ export default function Image({ src, alt, width = 400, height = 300, className =
   useEffect(() => {
     // Debug logging
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-    const fullUrl = `https://res.cloudinary.com/${cloudName}/image/upload/v1743325459/${src}.jpg`;
+    const fullUrl = `https://res.cloudinary.com/${cloudName}/image/upload/${src}`;
     
     console.log('Image props:', {
       src,
       cloudName,
       fullUrl,
       // Log the actual URL being used by CldImage
-      cldUrl: `https://res.cloudinary.com/${cloudName}/image/upload/c_fill,g_auto,q_auto,w_${width},h_${height}/v1743325459/${src}.jpg`
+      cldUrl: `https://res.cloudinary.com/${cloudName}/image/upload/c_fill,g_auto,q_auto,w_${width},h_${height}/${src}`
     });
 
     // Test if the image exists
@@ -43,7 +43,7 @@ export default function Image({ src, alt, width = 400, height = 300, className =
   return (
     <div className={`relative overflow-hidden ${className}`}>
       <CldImage
-        src={`v1743325459/${src}.jpg`}
+        src={src}
         alt={alt}
         width={width}
         height={height}

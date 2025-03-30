@@ -1,6 +1,7 @@
 import { Card, CardContent, Typography, Button, Box, Chip, Stack } from '@mui/material';
 import { Yard } from '@/types/yard';
 import Image from './ui/Image';
+import { useEffect } from 'react';
 
 interface YardCardProps {
   yard: Yard;
@@ -8,6 +9,15 @@ interface YardCardProps {
 }
 
 export default function YardCard({ yard, onBook }: YardCardProps) {
+  useEffect(() => {
+    // Debug logging
+    console.log('YardCard image data:', {
+      title: yard.title,
+      image: yard.image,
+      fullUrl: `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/v1/${yard.image}`
+    });
+  }, [yard]);
+
   return (
     <Card 
       sx={{ 

@@ -1,7 +1,6 @@
 import { Card, CardContent, Typography, Button, Box, Chip, Stack } from '@mui/material';
-import { Yard } from '@/types/yard';
-import Image from './ui/Image';
-import { useEffect } from 'react';
+import { Yard } from '../types/yard';
+import { useState } from 'react';
 
 interface YardCardProps {
   yard: Yard;
@@ -9,36 +8,13 @@ interface YardCardProps {
 }
 
 export default function YardCard({ yard, onBook }: YardCardProps) {
-  useEffect(() => {
-    // Debug logging
-    console.log('YardCard image data:', {
-      title: yard.title,
-      image: yard.image,
-      fullUrl: `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/v1743325459/${yard.image}.jpg`
-    });
-  }, [yard]);
+  const [imageError, setImageError] = useState(false);
+  
+  // Construct the image path with proper encoding
+  const imagePath = `/images/yards/${encodeURIComponent(yard.title)}.${yard.title === "Los Angeles Downtown Rooftop" ? "png" : "jpg"}`;
 
-  // Extract the public ID from the image URL if it's a full URL
-  const getPublicId = (imageUrl: string) => {
-    if (!imageUrl) return '';
-    
-    // Remove any ":1" suffix
-    let cleanUrl = imageUrl.replace(/:1$/, '');
-    
-    if (cleanUrl.startsWith('http')) {
-      // If it's a full URL, extract the public ID
-      const parts = cleanUrl.split('/');
-      cleanUrl = parts[parts.length - 1];
-    }
-    
-    // Add .jpg extension if not present
-    if (!cleanUrl.includes('.')) {
-      cleanUrl += '.jpg';
-    }
-    
-    // Add version number
-    return `v1743325459/${cleanUrl}`;
-  };
+  // Log the image path for debugging
+  console.log('Attempting to load image:', imagePath);
 
   return (
     <Card 
@@ -53,14 +29,54 @@ export default function YardCard({ yard, onBook }: YardCardProps) {
         }
       }}
     >
-      <Box sx={{ position: 'relative', paddingTop: '75%' }}>
-        <Image
-          src={getPublicId(yard.image)}
+      <Box 
+        component="div"
+        sx={{ 
+          position: 'relative', 
+          paddingTop: '75%', 
+          bgcolor: '#f5f5f5',
+          overflow: 'hidden'
+        }}
+      >
+        <img
+          src={imagePath}
           alt={yard.title}
-          width={400}
-          height={300}
-          className="absolute inset-0 w-full h-full object-cover"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block'
+          }}
+          onError={(e) => {
+            console.error('Image failed to load:', imagePath);
+            setImageError(true);
+            // Prevent infinite error loop
+            e.currentTarget.onerror = null;
+          }}
+          loading="eager"
         />
+        {imageError && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: '#f5f5f5',
+            }}
+          >
+            <Typography color="text.secondary">
+              Image not available
+            </Typography>
+          </Box>
+        )}
       </Box>
       <CardContent sx={{ flexGrow: 1 }}>
         <Typography gutterBottom variant="h5" component="h2">

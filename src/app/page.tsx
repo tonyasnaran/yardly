@@ -21,6 +21,9 @@ import {
   Rating,
   Skeleton,
   Alert,
+  Chip,
+  Stack,
+  Divider,
 } from '@mui/material';
 import LocationOn from '@mui/icons-material/LocationOn';
 import { useRouter } from 'next/navigation';
@@ -36,10 +39,26 @@ interface Yard {
   rating?: number;
 }
 
+const AMENITY_OPTIONS = [
+  { value: 'grill', label: 'Grill' },
+  { value: 'pool', label: 'Pool' },
+  { value: 'firepit', label: 'Fire Pit' },
+  { value: 'playground', label: 'Playground' },
+  { value: 'hottub', label: 'Hot Tub' },
+  { value: 'outdoor_kitchen', label: 'Outdoor Kitchen' },
+];
+
+const GUEST_OPTIONS = [
+  { value: '5', label: 'Up to 5 guests' },
+  { value: '10', label: 'Up to 10 guests' },
+  { value: '15', label: 'Up to 15 guests' },
+  { value: '20', label: 'Up to 20 guests' },
+];
+
 export default function Home() {
   const [city, setCity] = useState('');
-  const [guests, setGuests] = useState('');
-  const [amenities, setAmenities] = useState('');
+  const [selectedGuests, setSelectedGuests] = useState<string[]>([]);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [yards, setYards] = useState<Yard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,12 +72,11 @@ export default function Home() {
         throw new Error('Failed to fetch yards');
       }
       const data = await response.json();
-      // Ensure we're setting an array
       setYards(Array.isArray(data.yards) ? data.yards : []);
     } catch (err) {
       console.error('Error fetching yards:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch yards');
-      setYards([]); // Set empty array on error
+      setYards([]);
     } finally {
       setLoading(false);
     }
@@ -68,14 +86,32 @@ export default function Home() {
     fetchYards();
   }, []);
 
-  const handleSearch = () => {
-    setLoading(true);
-    fetchYards();
+  const handleGuestToggle = (value: string) => {
+    setSelectedGuests(prev => 
+      prev.includes(value) 
+        ? prev.filter(v => v !== value)
+        : [...prev, value]
+    );
   };
 
-  const handleYardClick = (id: number) => {
-    router.push(`/yards/${id}`);
+  const handleAmenityToggle = (value: string) => {
+    setSelectedAmenities(prev => 
+      prev.includes(value) 
+        ? prev.filter(v => v !== value)
+        : [...prev, value]
+    );
   };
+
+  const filteredYards = yards.filter(yard => {
+    const matchesGuests = selectedGuests.length === 0 || 
+      selectedGuests.includes(yard.guests.toString());
+    const matchesAmenities = selectedAmenities.length === 0 || 
+      selectedAmenities.some(amenity => yard.amenities.includes(amenity));
+    const matchesCity = !city || 
+      yard.city.toLowerCase().includes(city.toLowerCase());
+    
+    return matchesGuests && matchesAmenities && matchesCity;
+  });
 
   return (
     <Box>
@@ -90,59 +126,76 @@ export default function Home() {
       <Container maxWidth="lg" sx={{ mt: 4 }}>
         {/* Search Section */}
         <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-            <Box sx={{ flexGrow: 1, minWidth: { xs: '100%', md: '23%' } }}>
-              <TextField
-                fullWidth
-                label="City"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
+          <TextField
+            fullWidth
+            label="Search by city"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            sx={{ mb: 2 }}
+          />
+          
+          {/* Guest Limit Tags */}
+          <Typography variant="subtitle1" sx={{ mb: 1, color: '#3A7D44' }}>
+            Guest Limit
+          </Typography>
+          <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}>
+            {GUEST_OPTIONS.map((option) => (
+              <Chip
+                key={option.value}
+                label={option.label}
+                onClick={() => handleGuestToggle(option.value)}
+                color={selectedGuests.includes(option.value) ? 'primary' : 'default'}
+                sx={{
+                  bgcolor: selectedGuests.includes(option.value) ? '#3A7D44' : 'transparent',
+                  color: selectedGuests.includes(option.value) ? 'white' : '#3A7D44',
+                  borderColor: '#3A7D44',
+                  '&:hover': {
+                    bgcolor: selectedGuests.includes(option.value) ? '#2D5F35' : 'rgba(58, 125, 68, 0.1)',
+                  },
+                }}
               />
-            </Box>
-            <Box sx={{ flexGrow: 1, minWidth: { xs: '100%', md: '23%' } }}>
-              <FormControl fullWidth>
-                <InputLabel>Guest Limit</InputLabel>
-                <Select
-                  value={guests}
-                  label="Guest Limit"
-                  onChange={(e) => setGuests(e.target.value)}
-                >
-                  <MenuItem value="5">Up to 5 guests</MenuItem>
-                  <MenuItem value="10">Up to 10 guests</MenuItem>
-                  <MenuItem value="15">Up to 15 guests</MenuItem>
-                  <MenuItem value="20">Up to 20 guests</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
-            <Box sx={{ flexGrow: 1, minWidth: { xs: '100%', md: '23%' } }}>
-              <FormControl fullWidth>
-                <InputLabel>Amenities</InputLabel>
-                <Select
-                  value={amenities}
-                  label="Amenities"
-                  onChange={(e) => setAmenities(e.target.value)}
-                >
-                  <MenuItem value="grill">Grill</MenuItem>
-                  <MenuItem value="pool">Pool</MenuItem>
-                  <MenuItem value="firepit">Fire Pit</MenuItem>
-                  <MenuItem value="playground">Playground</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
-            <Box sx={{ flexGrow: 1, minWidth: { xs: '100%', md: '23%' } }}>
-              <Button
-                fullWidth
-                variant="contained"
-                color="primary"
-                onClick={handleSearch}
-                disabled={loading}
-                sx={{ height: '100%' }}
-              >
-                {loading ? <CircularProgress size={24} /> : 'Search'}
-              </Button>
-            </Box>
-          </Box>
+            ))}
+          </Stack>
+
+          {/* Amenities Tags */}
+          <Typography variant="subtitle1" sx={{ mb: 1, color: '#3A7D44' }}>
+            Amenities
+          </Typography>
+          <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}>
+            {AMENITY_OPTIONS.map((option) => (
+              <Chip
+                key={option.value}
+                label={option.label}
+                onClick={() => handleAmenityToggle(option.value)}
+                color={selectedAmenities.includes(option.value) ? 'primary' : 'default'}
+                sx={{
+                  bgcolor: selectedAmenities.includes(option.value) ? '#3A7D44' : 'transparent',
+                  color: selectedAmenities.includes(option.value) ? 'white' : '#3A7D44',
+                  borderColor: '#3A7D44',
+                  '&:hover': {
+                    bgcolor: selectedAmenities.includes(option.value) ? '#2D5F35' : 'rgba(58, 125, 68, 0.1)',
+                  },
+                }}
+              />
+            ))}
+          </Stack>
         </Box>
+
+        {/* Featured Yards Section */}
+        <Typography 
+          variant="h4" 
+          component="h2" 
+          sx={{ 
+            mb: 3, 
+            color: '#3A7D44',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
+        >
+          Featured Yards
+        </Typography>
 
         {/* Yard Listings */}
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 3 }}>
@@ -165,7 +218,7 @@ export default function Home() {
                 {error}
               </Alert>
             </Box>
-          ) : yards.length === 0 ? (
+          ) : filteredYards.length === 0 ? (
             // Empty state
             <Box sx={{ gridColumn: '1 / -1' }}>
               <Alert severity="info" sx={{ mt: 2 }}>
@@ -174,7 +227,7 @@ export default function Home() {
             </Box>
           ) : (
             // Success state
-            yards.map((yard) => (
+            filteredYards.map((yard) => (
               <Card 
                 key={yard.id}
                 sx={{ 
@@ -200,14 +253,33 @@ export default function Home() {
                   <Typography gutterBottom variant="h6" component="h2">
                     {yard.title}
                   </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                    <Chip 
+                      label={`Up to ${yard.guests} guests`}
+                      size="small"
+                      sx={{ bgcolor: '#FFD166', color: '#3A7D44' }}
+                    />
+                    {yard.amenities.slice(0, 3).map((amenity) => (
+                      <Chip
+                        key={amenity}
+                        label={amenity}
+                        size="small"
+                        sx={{ bgcolor: 'rgba(58, 125, 68, 0.1)', color: '#3A7D44' }}
+                      />
+                    ))}
+                    {yard.amenities.length > 3 && (
+                      <Chip
+                        label={`+${yard.amenities.length - 3} more`}
+                        size="small"
+                        sx={{ bgcolor: 'rgba(58, 125, 68, 0.1)', color: '#3A7D44' }}
+                      />
+                    )}
+                  </Box>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     {yard.city}
                   </Typography>
                   <Typography variant="h6" color="primary">
                     ${yard.price}/hour
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Up to {yard.guests} guests
                   </Typography>
                 </CardContent>
               </Card>

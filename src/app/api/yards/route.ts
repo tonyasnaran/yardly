@@ -4,81 +4,81 @@ import { NextRequest, NextResponse } from 'next/server';
 const yards = [
   {
     id: 1,
-    title: "Cozy Backyard Garden",
-    city: "New York",
+    title: "Beverly Hills Garden Oasis",
+    city: "Los Angeles",
     price: 50,
     guests: 10,
     image: "https://source.unsplash.com/random/400x300/?garden",
     amenities: ["grill", "firepit", "pool"],
-    description: "A peaceful garden space perfect for intimate gatherings and outdoor dining. Features include a modern grill, cozy fire pit, and ambient lighting throughout the space.",
+    description: "A luxurious garden space in the heart of Beverly Hills. Features include a modern grill, cozy fire pit, and ambient lighting throughout the space. Perfect for intimate gatherings and outdoor dining.",
     rating: 4.8,
     reviews: 24,
-    nearbyAttractions: ["Central Park", "Times Square", "Empire State Building"]
+    nearbyAttractions: ["Rodeo Drive", "Beverly Gardens Park", "The Grove"]
   },
   {
     id: 2,
-    title: "Luxury Poolside Retreat",
+    title: "Venice Beach Poolside Retreat",
     city: "Los Angeles",
     price: 75,
     guests: 15,
     image: "https://source.unsplash.com/random/400x300/?pool",
     amenities: ["pool", "hottub", "outdoor_kitchen"],
-    description: "A stunning outdoor space featuring a large pool, hot tub, and fully equipped outdoor kitchen. Perfect for summer gatherings and pool parties.",
+    description: "A stunning outdoor space in Venice Beach featuring a large pool, hot tub, and fully equipped outdoor kitchen. Perfect for summer gatherings and pool parties with the beach just steps away.",
     rating: 4.9,
     reviews: 31,
-    nearbyAttractions: ["Hollywood Sign", "Griffith Observatory", "Santa Monica Pier"]
+    nearbyAttractions: ["Venice Beach Boardwalk", "Abbot Kinney Blvd", "Santa Monica Pier"]
   },
   {
     id: 3,
-    title: "Urban Rooftop Oasis",
-    city: "Chicago",
+    title: "Downtown LA Rooftop",
+    city: "Los Angeles",
     price: 65,
     guests: 20,
     image: "https://source.unsplash.com/random/400x300/?rooftop",
     amenities: ["outdoor_kitchen", "firepit", "playground"],
-    description: "A modern rooftop space with panoramic city views. Features a fully equipped outdoor kitchen, cozy fire pit, and a small playground area for kids. Perfect for corporate events and family gatherings.",
+    description: "A modern rooftop space with panoramic views of the LA skyline. Features a fully equipped outdoor kitchen, cozy fire pit, and a small playground area for kids. Perfect for corporate events and family gatherings.",
     rating: 4.7,
     reviews: 18,
-    nearbyAttractions: ["Millennium Park", "Navy Pier", "Art Institute of Chicago"]
+    nearbyAttractions: ["Staples Center", "Grand Park", "The Broad Museum"]
   },
   {
     id: 4,
-    title: "Beachfront Paradise",
-    city: "Miami",
+    title: "Malibu Beachfront Paradise",
+    city: "Los Angeles",
     price: 90,
     guests: 25,
     image: "https://source.unsplash.com/random/400x300/?beach",
     amenities: ["pool", "grill", "playground"],
-    description: "A beautiful beachfront property with direct access to the ocean. Features a large pool, outdoor grill, and a playground. Perfect for beach parties and family gatherings.",
+    description: "A beautiful beachfront property in Malibu with direct access to the ocean. Features a large pool, outdoor grill, and a playground. Perfect for beach parties and family gatherings with stunning Pacific views.",
     rating: 4.9,
     reviews: 42,
-    nearbyAttractions: ["South Beach", "Miami Beach", "Lincoln Road"]
+    nearbyAttractions: ["Malibu Pier", "Zuma Beach", "Point Dume"]
   },
   {
     id: 5,
-    title: "Mountain View Retreat",
-    city: "Denver",
+    title: "Griffith Park Mountain View",
+    city: "Los Angeles",
     price: 55,
     guests: 12,
     image: "https://source.unsplash.com/random/400x300/?mountain",
     amenities: ["firepit", "grill", "hottub"],
-    description: "A serene mountain-view space perfect for nature lovers. Features a cozy fire pit, outdoor grill, and hot tub. Ideal for stargazing and outdoor gatherings.",
+    description: "A serene mountain-view space overlooking Griffith Park. Features a cozy fire pit, outdoor grill, and hot tub. Ideal for stargazing and outdoor gatherings with views of the Hollywood sign.",
     rating: 4.8,
     reviews: 28,
-    nearbyAttractions: ["Red Rocks Park", "Denver Botanic Gardens", "Mount Evans"]
+    nearbyAttractions: ["Griffith Observatory", "Hollywood Sign", "Los Angeles Zoo"]
   },
   {
     id: 6,
-    title: "Desert Oasis",
-    city: "Phoenix",
+    title: "West Hollywood Desert Oasis",
+    city: "Los Angeles",
     price: 60,
     guests: 15,
     image: "https://source.unsplash.com/random/400x300/?desert",
     amenities: ["pool", "outdoor_kitchen", "firepit"],
-    description: "A beautiful desert landscape with modern amenities. Features a large pool, fully equipped outdoor kitchen, and fire pit. Perfect for winter gatherings and outdoor dining.",
+    description: "A beautiful desert-inspired landscape in West Hollywood with modern amenities. Features a large pool, fully equipped outdoor kitchen, and fire pit. Perfect for winter gatherings and outdoor dining.",
     rating: 4.7,
     reviews: 35,
-    nearbyAttractions: ["Desert Botanical Garden", "Camelback Mountain", "Phoenix Zoo"]
+    nearbyAttractions: ["Sunset Strip", "Runyon Canyon", "The Comedy Store"]
   }
 ];
 

@@ -55,6 +55,8 @@ export default function BookingPage() {
   const [checkOut, setCheckOut] = useState<Date | null>(null);
   const [totalHours, setTotalHours] = useState(0);
   const [baseRate, setBaseRate] = useState(0);
+  const [serviceFee, setServiceFee] = useState(0);
+  const [totalCost, setTotalCost] = useState(0);
 
   useEffect(() => {
     const fetchYardDetails = async () => {
@@ -82,9 +84,20 @@ export default function BookingPage() {
     if (checkIn && checkOut && yard) {
       const hours = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60));
       setTotalHours(hours);
-      setBaseRate(hours * yard.price);
+      const base = hours * yard.price;
+      setBaseRate(base);
+      const fee = Math.round(base * 0.1); // 10% service fee
+      setServiceFee(fee);
+      setTotalCost(base + fee);
+    } else {
+      setTotalHours(0);
+      setBaseRate(0);
+      setServiceFee(0);
+      setTotalCost(0);
     }
   }, [checkIn, checkOut, yard]);
+
+  const isBookingComplete = checkIn && checkOut && totalHours > 0;
 
   if (!yard) {
     return (
@@ -205,48 +218,55 @@ export default function BookingPage() {
                   onChange={(newValue) => setCheckOut(newValue)}
                   slotProps={{
                     textField: {
-                      fullWidth: true,
-                      sx: { mb: 2 }
+                      fullWidth: true
                     }
                   }}
                 />
               </Stack>
             </LocalizationProvider>
 
+            <Divider sx={{ my: 3 }} />
+
+            {/* Pricing Details */}
             <TableContainer>
               <Table>
                 <TableBody>
                   <TableRow>
-                    <TableCell component="th" scope="row">
-                      Time Slot
+                    <TableCell sx={{ border: 'none', pl: 0, pt: 0 }}>
+                      <Typography variant="body1">
+                        Base Rate
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        ${yard.price} × {totalHours} hours
+                      </Typography>
                     </TableCell>
-                    <TableCell align="right">
-                      {checkIn && checkOut ? (
-                        <Box>
-                          <Typography variant="body2">
-                            Check-in: {format(checkIn, 'MMM d, h:mm a')}
-                          </Typography>
-                          <Typography variant="body2">
-                            Check-out: {format(checkOut, 'MMM d, h:mm a')}
-                          </Typography>
-                        </Box>
-                      ) : (
-                        'Select dates'
-                      )}
+                    <TableCell align="right" sx={{ border: 'none', pr: 0, pt: 0 }}>
+                      ${baseRate}
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell component="th" scope="row">
-                      Base Rate
+                    <TableCell sx={{ border: 'none', pl: 0 }}>
+                      <Typography variant="body1">
+                        Service Fee
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        10% of base rate
+                      </Typography>
                     </TableCell>
-                    <TableCell align="right">
-                      {totalHours > 0 ? (
-                        <Typography>
-                          ${yard.price} × {totalHours} hours = ${baseRate}
-                        </Typography>
-                      ) : (
-                        'Select dates'
-                      )}
+                    <TableCell align="right" sx={{ border: 'none', pr: 0 }}>
+                      ${serviceFee}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ border: 'none', pl: 0, pt: 3 }}>
+                      <Typography variant="h6">
+                        Total Cost
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right" sx={{ border: 'none', pr: 0, pt: 3 }}>
+                      <Typography variant="h6">
+                        ${totalCost}
+                      </Typography>
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -256,16 +276,21 @@ export default function BookingPage() {
             <Button
               variant="contained"
               fullWidth
-              size="large"
-              sx={{ 
+              disabled={!isBookingComplete}
+              sx={{
                 mt: 3,
-                bgcolor: '#3A7D44',
+                py: 1.5,
+                bgcolor: isBookingComplete ? '#DAA520' : 'rgba(218, 165, 32, 0.5)',
                 '&:hover': {
-                  bgcolor: '#2D5F35',
+                  bgcolor: isBookingComplete ? '#B8860B' : 'rgba(218, 165, 32, 0.5)',
                 },
+                '&.Mui-disabled': {
+                  bgcolor: 'rgba(218, 165, 32, 0.5)',
+                  color: 'white',
+                }
               }}
             >
-              Confirm Booking
+              Reserve Now
             </Button>
           </Paper>
         </Box>

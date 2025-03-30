@@ -4,8 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 const yards = [
   {
     id: 1,
-    title: "Beverly Hills Garden Oasis",
-    city: "Los Angeles",
+    title: "Garden Oasis",
+    city: "Beverly Hills",
     price: 50,
     guests: 10,
     image: "https://source.unsplash.com/random/400x300/?garden",
@@ -17,8 +17,8 @@ const yards = [
   },
   {
     id: 2,
-    title: "Venice Beach Poolside Retreat",
-    city: "Los Angeles",
+    title: "Poolside Retreat",
+    city: "Venice",
     price: 75,
     guests: 15,
     image: "https://source.unsplash.com/random/400x300/?pool",
@@ -30,8 +30,8 @@ const yards = [
   },
   {
     id: 3,
-    title: "Downtown LA Rooftop",
-    city: "Los Angeles",
+    title: "Skyline Rooftop",
+    city: "Downtown",
     price: 65,
     guests: 20,
     image: "https://source.unsplash.com/random/400x300/?rooftop",
@@ -43,8 +43,8 @@ const yards = [
   },
   {
     id: 4,
-    title: "Malibu Beachfront Paradise",
-    city: "Los Angeles",
+    title: "Beachfront Paradise",
+    city: "Malibu",
     price: 90,
     guests: 25,
     image: "https://source.unsplash.com/random/400x300/?beach",
@@ -56,8 +56,8 @@ const yards = [
   },
   {
     id: 5,
-    title: "Griffith Park Mountain View",
-    city: "Los Angeles",
+    title: "Mountain View Retreat",
+    city: "Los Feliz",
     price: 55,
     guests: 12,
     image: "https://source.unsplash.com/random/400x300/?mountain",
@@ -69,8 +69,8 @@ const yards = [
   },
   {
     id: 6,
-    title: "West Hollywood Desert Oasis",
-    city: "Los Angeles",
+    title: "Desert Oasis",
+    city: "West Hollywood",
     price: 60,
     guests: 15,
     image: "https://source.unsplash.com/random/400x300/?desert",

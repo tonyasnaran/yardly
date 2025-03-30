@@ -1,6 +1,5 @@
 import { Card, CardContent, Typography, Button, Box, Chip, Stack } from '@mui/material';
 import { Yard } from '../types/yard';
-import { useState } from 'react';
 
 interface YardCardProps {
   yard: Yard;
@@ -8,14 +7,6 @@ interface YardCardProps {
 }
 
 export default function YardCard({ yard, onBook }: YardCardProps) {
-  const [imageError, setImageError] = useState(false);
-  
-  // Construct the image path with proper encoding
-  const imagePath = `/images/yards/${encodeURIComponent(yard.title)}.${yard.title === "Los Angeles Downtown Rooftop" ? "png" : "jpg"}`;
-
-  // Log the image path for debugging
-  console.log('Attempting to load image:', imagePath);
-
   return (
     <Card 
       sx={{ 
@@ -30,7 +21,6 @@ export default function YardCard({ yard, onBook }: YardCardProps) {
       }}
     >
       <Box 
-        component="div"
         sx={{ 
           position: 'relative', 
           paddingTop: '75%', 
@@ -39,7 +29,7 @@ export default function YardCard({ yard, onBook }: YardCardProps) {
         }}
       >
         <img
-          src={imagePath}
+          src={`/images/yards/${yard.title}.jpg`}
           alt={yard.title}
           style={{
             position: 'absolute',
@@ -47,36 +37,9 @@ export default function YardCard({ yard, onBook }: YardCardProps) {
             left: 0,
             width: '100%',
             height: '100%',
-            objectFit: 'cover',
-            display: 'block'
+            objectFit: 'cover'
           }}
-          onError={(e) => {
-            console.error('Image failed to load:', imagePath);
-            setImageError(true);
-            // Prevent infinite error loop
-            e.currentTarget.onerror = null;
-          }}
-          loading="eager"
         />
-        {imageError && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              bgcolor: '#f5f5f5',
-            }}
-          >
-            <Typography color="text.secondary">
-              Image not available
-            </Typography>
-          </Box>
-        )}
       </Box>
       <CardContent sx={{ flexGrow: 1 }}>
         <Typography gutterBottom variant="h5" component="h2">

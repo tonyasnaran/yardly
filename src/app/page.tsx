@@ -24,6 +24,7 @@ import {
   Chip,
   Stack,
   Divider,
+  OutlinedInput,
 } from '@mui/material';
 import LocationOn from '@mui/icons-material/LocationOn';
 import { useRouter } from 'next/navigation';
@@ -86,27 +87,19 @@ export default function Home() {
     fetchYards();
   }, []);
 
-  const handleGuestToggle = (value: string) => {
-    setSelectedGuests(prev => 
-      prev.includes(value) 
-        ? prev.filter(v => v !== value)
-        : [...prev, value]
-    );
+  const handleGuestChange = (event: any) => {
+    setSelectedGuests(event.target.value);
   };
 
-  const handleAmenityToggle = (value: string) => {
-    setSelectedAmenities(prev => 
-      prev.includes(value) 
-        ? prev.filter(v => v !== value)
-        : [...prev, value]
-    );
+  const handleAmenityChange = (event: any) => {
+    setSelectedAmenities(event.target.value);
   };
 
   const filteredYards = yards.filter(yard => {
     const matchesGuests = selectedGuests.length === 0 || 
       selectedGuests.includes(yard.guests.toString());
     const matchesAmenities = selectedAmenities.length === 0 || 
-      selectedAmenities.some(amenity => yard.amenities.includes(amenity));
+      selectedAmenities.every(amenity => yard.amenities.includes(amenity));
     const matchesCity = !city || 
       yard.city.toLowerCase().includes(city.toLowerCase());
     
@@ -134,51 +127,61 @@ export default function Home() {
             sx={{ mb: 2 }}
           />
           
-          {/* Guest Limit Tags */}
-          <Typography variant="subtitle1" sx={{ mb: 1, color: '#3A7D44' }}>
-            Guest Limit
-          </Typography>
-          <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}>
-            {GUEST_OPTIONS.map((option) => (
-              <Chip
-                key={option.value}
-                label={option.label}
-                onClick={() => handleGuestToggle(option.value)}
-                color={selectedGuests.includes(option.value) ? 'primary' : 'default'}
-                sx={{
-                  bgcolor: selectedGuests.includes(option.value) ? '#3A7D44' : 'transparent',
-                  color: selectedGuests.includes(option.value) ? 'white' : '#3A7D44',
-                  borderColor: '#3A7D44',
-                  '&:hover': {
-                    bgcolor: selectedGuests.includes(option.value) ? '#2D5F35' : 'rgba(58, 125, 68, 0.1)',
-                  },
-                }}
-              />
-            ))}
-          </Stack>
+          {/* Guest Limit Dropdown */}
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Guest Limit</InputLabel>
+            <Select
+              multiple
+              value={selectedGuests}
+              onChange={handleGuestChange}
+              input={<OutlinedInput label="Guest Limit" />}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Chip 
+                      key={value} 
+                      label={GUEST_OPTIONS.find(opt => opt.value === value)?.label}
+                      sx={{ bgcolor: '#3A7D44', color: 'white' }}
+                    />
+                  ))}
+                </Box>
+              )}
+            >
+              {GUEST_OPTIONS.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-          {/* Amenities Tags */}
-          <Typography variant="subtitle1" sx={{ mb: 1, color: '#3A7D44' }}>
-            Amenities
-          </Typography>
-          <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}>
-            {AMENITY_OPTIONS.map((option) => (
-              <Chip
-                key={option.value}
-                label={option.label}
-                onClick={() => handleAmenityToggle(option.value)}
-                color={selectedAmenities.includes(option.value) ? 'primary' : 'default'}
-                sx={{
-                  bgcolor: selectedAmenities.includes(option.value) ? '#3A7D44' : 'transparent',
-                  color: selectedAmenities.includes(option.value) ? 'white' : '#3A7D44',
-                  borderColor: '#3A7D44',
-                  '&:hover': {
-                    bgcolor: selectedAmenities.includes(option.value) ? '#2D5F35' : 'rgba(58, 125, 68, 0.1)',
-                  },
-                }}
-              />
-            ))}
-          </Stack>
+          {/* Amenities Dropdown */}
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Amenities</InputLabel>
+            <Select
+              multiple
+              value={selectedAmenities}
+              onChange={handleAmenityChange}
+              input={<OutlinedInput label="Amenities" />}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Chip 
+                      key={value} 
+                      label={AMENITY_OPTIONS.find(opt => opt.value === value)?.label}
+                      sx={{ bgcolor: '#3A7D44', color: 'white' }}
+                    />
+                  ))}
+                </Box>
+              )}
+            >
+              {AMENITY_OPTIONS.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Box>
 
         {/* Featured Yards Section */}
@@ -262,7 +265,7 @@ export default function Home() {
                     {yard.amenities.slice(0, 3).map((amenity) => (
                       <Chip
                         key={amenity}
-                        label={amenity}
+                        label={AMENITY_OPTIONS.find(opt => opt.value === amenity)?.label || amenity}
                         size="small"
                         sx={{ bgcolor: 'rgba(58, 125, 68, 0.1)', color: '#3A7D44' }}
                       />

@@ -13,34 +13,30 @@ export default function Image({ src, alt, width = 400, height = 300, className =
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Add file extension if not present
-  const imageSrc = src.includes('.') ? src : `${src}.jpg`;
-
   useEffect(() => {
     // Debug logging
     console.log('Image props:', {
-      originalSrc: src,
-      processedSrc: imageSrc,
+      src,
       cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-      fullUrl: `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/v1/${imageSrc}`
+      fullUrl: `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/v1/${src}`
     });
-  }, [src, imageSrc]);
+  }, [src]);
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
       <CldImage
-        src={imageSrc}
+        src={src}
         alt={alt}
         width={width}
         height={height}
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         onLoad={() => {
-          console.log('Image loaded successfully:', imageSrc);
+          console.log('Image loaded successfully:', src);
           setIsLoading(false);
         }}
         onError={(error) => {
           console.error('Image loading error:', error);
-          setError(`Failed to load image: ${imageSrc}`);
+          setError(`Failed to load image: ${src}`);
         }}
         className={`
           duration-700 ease-in-out

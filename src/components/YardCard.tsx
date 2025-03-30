@@ -14,9 +14,19 @@ export default function YardCard({ yard, onBook }: YardCardProps) {
     console.log('YardCard image data:', {
       title: yard.title,
       image: yard.image,
-      fullUrl: `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/v1/${yard.image}`
+      fullUrl: `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${yard.image}`
     });
   }, [yard]);
+
+  // Extract the public ID from the image URL if it's a full URL
+  const getPublicId = (imageUrl: string) => {
+    if (imageUrl.startsWith('http')) {
+      // If it's a full URL, extract the public ID
+      const parts = imageUrl.split('/');
+      return parts[parts.length - 1];
+    }
+    return imageUrl;
+  };
 
   return (
     <Card 
@@ -33,7 +43,7 @@ export default function YardCard({ yard, onBook }: YardCardProps) {
     >
       <Box sx={{ position: 'relative', paddingTop: '75%' }}>
         <Image
-          src={yard.image}
+          src={getPublicId(yard.image)}
           alt={yard.title}
           width={400}
           height={300}

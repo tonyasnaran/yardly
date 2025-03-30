@@ -29,7 +29,7 @@ export default function YardCard({ yard, onBook }: YardCardProps) {
         }}
       >
         <img
-          src={`/images/yards/${yard.title}.jpg`}
+          src={yard.image}
           alt={yard.title}
           style={{
             position: 'absolute',

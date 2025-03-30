@@ -14,7 +14,7 @@ export default function YardCard({ yard, onBook }: YardCardProps) {
     console.log('YardCard image data:', {
       title: yard.title,
       image: yard.image,
-      fullUrl: `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${yard.image}`
+      fullUrl: `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/v1743325459/${yard.image}.jpg`
     });
   }, [yard]);
 
@@ -36,7 +36,8 @@ export default function YardCard({ yard, onBook }: YardCardProps) {
       cleanUrl += '.jpg';
     }
     
-    return cleanUrl;
+    // Add version number
+    return `v1743325459/${cleanUrl}`;
   };
 
   return (

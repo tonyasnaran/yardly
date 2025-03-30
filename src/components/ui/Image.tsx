@@ -35,6 +35,8 @@ export default function Image({ src, alt, width = 400, height = 300, className =
         if (!response.ok) {
           console.error(`Image not found: ${fullUrl}`);
           setError(`Image not found: ${cleanSrc}`);
+        } else {
+          setError(null);
         }
       })
       .catch(err => {
@@ -43,7 +45,7 @@ export default function Image({ src, alt, width = 400, height = 300, className =
       });
   }, [src, width, height]);
 
-  // Remove any ":1" suffix for the CldImage component
+  // The src should already include the version number from YardCard
   const cleanSrc = src.replace(/:1$/, '');
 
   return (

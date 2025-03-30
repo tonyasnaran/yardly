@@ -27,6 +27,58 @@ const yards = [
     rating: 4.9,
     reviews: 31,
     nearbyAttractions: ["Hollywood Sign", "Griffith Observatory", "Santa Monica Pier"]
+  },
+  {
+    id: 3,
+    title: "Urban Rooftop Oasis",
+    city: "Chicago",
+    price: 65,
+    guests: 20,
+    image: "https://source.unsplash.com/random/400x300/?rooftop",
+    amenities: ["outdoor_kitchen", "firepit", "playground"],
+    description: "A modern rooftop space with panoramic city views. Features a fully equipped outdoor kitchen, cozy fire pit, and a small playground area for kids. Perfect for corporate events and family gatherings.",
+    rating: 4.7,
+    reviews: 18,
+    nearbyAttractions: ["Millennium Park", "Navy Pier", "Art Institute of Chicago"]
+  },
+  {
+    id: 4,
+    title: "Beachfront Paradise",
+    city: "Miami",
+    price: 90,
+    guests: 25,
+    image: "https://source.unsplash.com/random/400x300/?beach",
+    amenities: ["pool", "grill", "playground"],
+    description: "A beautiful beachfront property with direct access to the ocean. Features a large pool, outdoor grill, and a playground. Perfect for beach parties and family gatherings.",
+    rating: 4.9,
+    reviews: 42,
+    nearbyAttractions: ["South Beach", "Miami Beach", "Lincoln Road"]
+  },
+  {
+    id: 5,
+    title: "Mountain View Retreat",
+    city: "Denver",
+    price: 55,
+    guests: 12,
+    image: "https://source.unsplash.com/random/400x300/?mountain",
+    amenities: ["firepit", "grill", "hottub"],
+    description: "A serene mountain-view space perfect for nature lovers. Features a cozy fire pit, outdoor grill, and hot tub. Ideal for stargazing and outdoor gatherings.",
+    rating: 4.8,
+    reviews: 28,
+    nearbyAttractions: ["Red Rocks Park", "Denver Botanic Gardens", "Mount Evans"]
+  },
+  {
+    id: 6,
+    title: "Desert Oasis",
+    city: "Phoenix",
+    price: 60,
+    guests: 15,
+    image: "https://source.unsplash.com/random/400x300/?desert",
+    amenities: ["pool", "outdoor_kitchen", "firepit"],
+    description: "A beautiful desert landscape with modern amenities. Features a large pool, fully equipped outdoor kitchen, and fire pit. Perfect for winter gatherings and outdoor dining.",
+    rating: 4.7,
+    reviews: 35,
+    nearbyAttractions: ["Desert Botanical Garden", "Camelback Mountain", "Phoenix Zoo"]
   }
 ];
 

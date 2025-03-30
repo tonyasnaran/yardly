@@ -16,14 +16,17 @@ export default function Image({ src, alt, width = 400, height = 300, className =
   useEffect(() => {
     // Debug logging
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-    const fullUrl = `https://res.cloudinary.com/${cloudName}/image/upload/${src}`;
+    // Remove any ":1" suffix and ensure .jpg extension
+    const cleanSrc = src.replace(/:1$/, '');
+    const fullUrl = `https://res.cloudinary.com/${cloudName}/image/upload/${cleanSrc}`;
     
     console.log('Image props:', {
-      src,
+      originalSrc: src,
+      cleanSrc,
       cloudName,
       fullUrl,
       // Log the actual URL being used by CldImage
-      cldUrl: `https://res.cloudinary.com/${cloudName}/image/upload/c_fill,g_auto,q_auto,w_${width},h_${height}/${src}`
+      cldUrl: `https://res.cloudinary.com/${cloudName}/image/upload/c_fill,g_auto,q_auto,w_${width},h_${height}/${cleanSrc}`
     });
 
     // Test if the image exists
@@ -31,30 +34,33 @@ export default function Image({ src, alt, width = 400, height = 300, className =
       .then(response => {
         if (!response.ok) {
           console.error(`Image not found: ${fullUrl}`);
-          setError(`Image not found: ${src}`);
+          setError(`Image not found: ${cleanSrc}`);
         }
       })
       .catch(err => {
         console.error('Error checking image:', err);
-        setError(`Error loading image: ${src}`);
+        setError(`Error loading image: ${cleanSrc}`);
       });
   }, [src, width, height]);
+
+  // Remove any ":1" suffix for the CldImage component
+  const cleanSrc = src.replace(/:1$/, '');
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
       <CldImage
-        src={src}
+        src={cleanSrc}
         alt={alt}
         width={width}
         height={height}
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         onLoad={() => {
-          console.log('Image loaded successfully:', src);
+          console.log('Image loaded successfully:', cleanSrc);
           setIsLoading(false);
         }}
         onError={(error) => {
           console.error('Image loading error:', error);
-          setError(`Failed to load image: ${src}`);
+          setError(`Failed to load image: ${cleanSrc}`);
         }}
         className={`
           duration-700 ease-in-out

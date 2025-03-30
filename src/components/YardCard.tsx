@@ -20,12 +20,23 @@ export default function YardCard({ yard, onBook }: YardCardProps) {
 
   // Extract the public ID from the image URL if it's a full URL
   const getPublicId = (imageUrl: string) => {
-    if (imageUrl.startsWith('http')) {
+    if (!imageUrl) return '';
+    
+    // Remove any ":1" suffix
+    let cleanUrl = imageUrl.replace(/:1$/, '');
+    
+    if (cleanUrl.startsWith('http')) {
       // If it's a full URL, extract the public ID
-      const parts = imageUrl.split('/');
-      return parts[parts.length - 1];
+      const parts = cleanUrl.split('/');
+      cleanUrl = parts[parts.length - 1];
     }
-    return imageUrl;
+    
+    // Add .jpg extension if not present
+    if (!cleanUrl.includes('.')) {
+      cleanUrl += '.jpg';
+    }
+    
+    return cleanUrl;
   };
 
   return (

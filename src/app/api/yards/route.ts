@@ -84,7 +84,8 @@ const yards = [
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    // Use searchParams from the request object directly
+    const searchParams = request.nextUrl.searchParams;
     const city = searchParams.get('city');
     const guests = searchParams.get('guests');
     const amenities = searchParams.get('amenities');
@@ -100,35 +101,25 @@ export async function GET(request: NextRequest) {
 
     if (guests) {
       const guestCount = parseInt(guests);
-      if (!isNaN(guestCount)) {
-        filteredYards = filteredYards.filter(yard => 
-          yard.guests >= guestCount
-        );
-      }
+      filteredYards = filteredYards.filter(yard => 
+        yard.guests >= guestCount
+      );
     }
 
     if (amenities) {
-      const amenityList = amenities.split(',').map(a => a.trim().toLowerCase());
+      const amenityList = amenities.split(',');
       filteredYards = filteredYards.filter(yard => 
-        yard.amenities.some(amenity => 
-          amenityList.includes(amenity.toLowerCase())
+        amenityList.every(amenity => 
+          yard.amenities.includes(amenity)
         )
       );
     }
 
-    return NextResponse.json({
-      yards: filteredYards,
-      total: filteredYards.length,
-      filters: {
-        city: city || undefined,
-        guests: guests ? parseInt(guests) : undefined,
-        amenities: amenities ? amenities.split(',').map(a => a.trim()) : undefined
-      }
-    });
+    return NextResponse.json(filteredYards);
   } catch (error) {
     console.error('Error fetching yards:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to fetch yards' },
       { status: 500 }
     );
   }

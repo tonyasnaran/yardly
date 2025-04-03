@@ -115,11 +115,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(filteredYards);
+    // Return data in a consistent format
+    return NextResponse.json({
+      yards: filteredYards,
+      total: filteredYards.length
+    });
   } catch (error) {
     console.error('Error fetching yards:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch yards' },
+      { error: 'Failed to fetch yards', yards: [], total: 0 },
       { status: 500 }
     );
   }

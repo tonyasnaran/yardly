@@ -1,0 +1,122 @@
+warning: in the working copy of 'tsconfig.json', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/next-env.d.ts b/next-env.d.ts[m
+[1mindex 1b3be08..4f11a03 100644[m
+[1m--- a/next-env.d.ts[m
+[1m+++ b/next-env.d.ts[m
+[36m@@ -2,4 +2,4 @@[m
+ /// <reference types="next/image-types/global" />[m
+ [m
+ // NOTE: This file should not be edited[m
+[31m-// see https://nextjs.org/docs/app/api-reference/config/typescript for more information.[m
+[32m+[m[32m// see https://nextjs.org/docs/basic-features/typescript for more information.[m
+[1mdiff --git a/src/components/ui/Image.tsx b/src/components/ui/Image.tsx[m
+[1mdeleted file mode 100644[m
+[1mindex 669d2ed..0000000[m
+[1m--- a/src/components/ui/Image.tsx[m
+[1m+++ /dev/null[m
+[36m@@ -1,87 +0,0 @@[m
+[31m-import { CldImage } from 'next-cloudinary';[m
+[31m-import { useState, useEffect } from 'react';[m
+[31m-[m
+[31m-interface ImageProps {[m
+[31m-  src: string;[m
+[31m-  alt: string;[m
+[31m-  width?: number;[m
+[31m-  height?: number;[m
+[31m-  className?: string;[m
+[31m-}[m
+[31m-[m
+[31m-export default function Image({ src, alt, width = 400, height = 300, className = '' }: ImageProps) {[m
+[31m-  const [isLoading, setIsLoading] = useState(true);[m
+[31m-  const [error, setError] = useState<string | null>(null);[m
+[31m-[m
+[31m-  useEffect(() => {[m
+[31m-    // Debug logging[m
+[31m-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;[m
+[31m-    // Remove any ":1" suffix and ensure .jpg extension[m
+[31m-    const cleanSrc = src.replace(/:1$/, '');[m
+[31m-    const fullUrl = `https://res.cloudinary.com/${cloudName}/image/upload/${cleanSrc}`;[m
+[31m-    [m
+[31m-    console.log('Image props:', {[m
+[31m-      originalSrc: src,[m
+[31m-      cleanSrc,[m
+[31m-      cloudName,[m
+[31m-      fullUrl,[m
+[31m-      // Log the actual URL being used by CldImage[m
+[31m-      cldUrl: `https://res.cloudinary.com/${cloudName}/image/upload/c_fill,g_auto,q_auto,w_${width},h_${height}/${cleanSrc}`[m
+[31m-    });[m
+[31m-[m
+[31m-    // Test if the image exists[m
+[31m-    fetch(fullUrl)[m
+[31m-      .then(response => {[m
+[31m-        if (!response.ok) {[m
+[31m-          console.error(`Image not found: ${fullUrl}`);[m
+[31m-          setError(`Image not found: ${cleanSrc}`);[m
+[31m-        } else {[m
+[31m-          setError(null);[m
+[31m-        }[m
+[31m-      })[m
+[31m-      .catch(err => {[m
+[31m-        console.error('Error checking image:', err);[m
+[31m-        setError(`Error loading image: ${cleanSrc}`);[m
+[31m-      });[m
+[31m-  }, [src, width, height]);[m
+[31m-[m
+[31m-  // The src should already include the version number from YardCard[m
+[31m-  const cleanSrc = src.replace(/:1$/, '');[m
+[31m-[m
+[31m-  return ([m
+[31m-    <div className={`relative overflow-hidden ${className}`}>[m
+[31m-      <CldImage[m
+[31m-        src={cleanSrc}[m
+[31m-        alt={alt}[m
+[31m-        width={width}[m
+[31m-        height={height}[m
+[31m-        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"[m
+[31m-        onLoad={() => {[m
+[31m-          console.log('Image loaded successfully:', cleanSrc);[m
+[31m-          setIsLoading(false);[m
+[31m-        }}[m
+[31m-        onError={(error) => {[m
+[31m-          console.error('Image loading error:', error);[m
+[31m-          setError(`Failed to load image: ${cleanSrc}`);[m
+[31m-        }}[m
+[31m-        className={`[m
+[31m-          duration-700 ease-in-out[m
+[31m-          ${isLoading ? 'scale-110 blur-2xl grayscale' : 'scale-100 blur-0 grayscale-0'}[m
+[31m-        `}[m
+[31m-        loading="lazy"[m
+[31m-        crop="fill"[m
+[31m-        gravity="auto"[m
+[31m-        quality="auto"[m
+[31m-        format="auto"[m
+[31m-      />[m
+[31m-      {isLoading && ([m
+[31m-        <div className="absolute inset-0 bg-gray-200 animate-pulse" />[m
+[31m-      )}[m
+[31m-      {error && ([m
+[31m-        <div className="absolute inset-0 flex items-center justify-center bg-red-100">[m
+[31m-          <p className="text-red-500">{error}</p>[m
+[31m-        </div>[m
+[31m-      )}[m
+[31m-    </div>[m
+[31m-  );[m
+[31m-} [m
+\ No newline at end of file[m
+[1mdiff --git a/tsconfig.json b/tsconfig.json[m
+[1mindex f619795..d2d30d9 100644[m
+[1m--- a/tsconfig.json[m
+[1m+++ b/tsconfig.json[m
+[36m@@ -21,7 +21,11 @@[m
+       {[m
+         "name": "next"[m
+       }[m
+[31m-    ][m
+[32m+[m[32m    ],[m
+[32m+[m[32m    "baseUrl": ".",[m
+[32m+[m[32m    "paths": {[m
+[32m+[m[32m      "@/*": ["src/*"][m
+[32m+[m[32m    }[m
+   },[m
+   "include": [[m
+     "next-env.d.ts",[m

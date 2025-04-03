@@ -1,0 +1,5 @@
+[33m7ce5f37[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Update .gitignore
+[33m37613da[m Remove .next directory from Git tracking
+[33m939e63b[m Add yard details page and fix API route handling
+[33mc47b205[m Initial commit: Basic Yardly app structure with MUI theme and API routes
+[33mfa16dd4[m[33m ([m[1;31morigin/main[m[33m)[m Initial commit

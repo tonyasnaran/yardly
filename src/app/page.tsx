@@ -68,15 +68,31 @@ export default function Home() {
   const fetchYards = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/yards');
+      setError(null);
+      
+      // Use absolute URL in production
+      const apiUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://goyardly.com/api/yards' 
+        : '/api/yards';
+        
+      const response = await fetch(apiUrl);
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch yards');
+        throw new Error(`API responded with status: ${response.status}`);
       }
+      
       const data = await response.json();
-      setYards(Array.isArray(data.yards) ? data.yards : []);
-    } catch (err) {
-      console.error('Error fetching yards:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch yards');
+      
+      if (data.error) {
+        console.error('API error:', data.error);
+        setError(data.error);
+        setYards([]);
+      } else {
+        setYards(data.yards || []);
+      }
+    } catch (error) {
+      console.error('Error fetching yards:', error);
+      setError('Failed to fetch yards. Please try again later.');
       setYards([]);
     } finally {
       setLoading(false);

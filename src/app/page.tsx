@@ -214,14 +214,6 @@ export default function Home() {
 
   return (
     <Box>
-      <AppBar position="static" color="primary">
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Yardly
-          </Typography>
-        </Toolbar>
-      </AppBar>
-
       <Container maxWidth="lg" sx={{ mt: 4 }}>
         {/* Search Section */}
         <Box sx={{ mb: 4 }}>

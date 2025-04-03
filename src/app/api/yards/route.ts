@@ -82,6 +82,20 @@ const yards = [
   }
 ];
 
+// Helper function to create CORS headers
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  };
+}
+
+// Handle OPTIONS requests for CORS preflight
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders() });
+}
+
 // Export a static GET handler that doesn't use dynamic server features
 export async function GET() {
   try {
@@ -89,12 +103,12 @@ export async function GET() {
     return NextResponse.json({
       yards: yards,
       total: yards.length
-    });
+    }, { headers: corsHeaders() });
   } catch (error) {
     console.error('Error fetching yards:', error);
     return NextResponse.json(
       { error: 'Failed to fetch yards', yards: [], total: 0 },
-      { status: 500 }
+      { status: 500, headers: corsHeaders() }
     );
   }
 }
@@ -134,12 +148,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       yards: filteredYards,
       total: filteredYards.length
-    });
+    }, { headers: corsHeaders() });
   } catch (error) {
     console.error('Error filtering yards:', error);
     return NextResponse.json(
       { error: 'Failed to filter yards', yards: [], total: 0 },
-      { status: 500 }
+      { status: 500, headers: corsHeaders() }
     );
   }
 }

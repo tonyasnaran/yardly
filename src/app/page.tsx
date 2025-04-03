@@ -70,21 +70,16 @@ export default function Home() {
       setLoading(true);
       setError(null);
       
-      // Use absolute URL in production
-      const apiUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://goyardly.com/api/yards' 
-        : '/api/yards';
-        
+      // Use relative URL for API requests
+      const apiUrl = '/api/yards';
+      
       console.log('Fetching yards from:', apiUrl);
       
-      // First, get all yards
       const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
         },
-        cache: 'no-store',
       });
       
       console.log('Response status:', response.status);

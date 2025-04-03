@@ -75,14 +75,26 @@ export default function Home() {
         ? 'https://goyardly.com/api/yards' 
         : '/api/yards';
         
+      console.log('Fetching yards from:', apiUrl);
+      
       // First, get all yards
-      const response = await fetch(apiUrl);
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+        cache: 'no-store',
+      });
+      
+      console.log('Response status:', response.status);
       
       if (!response.ok) {
         throw new Error(`API responded with status: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log('Received data:', data);
       
       if (data.error) {
         console.error('API error:', data.error);
@@ -118,21 +130,28 @@ export default function Home() {
         amenities: selectedAmenities.length > 0 ? selectedAmenities : undefined
       };
       
+      console.log('Filtering yards with params:', filterParams);
+      
       // Only make a POST request if we have filters
       if (filterParams.city || filterParams.guests || filterParams.amenities) {
         const response = await fetch(apiUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache',
           },
+          cache: 'no-store',
           body: JSON.stringify(filterParams),
         });
+        
+        console.log('Filter response status:', response.status);
         
         if (!response.ok) {
           throw new Error(`API responded with status: ${response.status}`);
         }
         
         const data = await response.json();
+        console.log('Received filtered data:', data);
         
         if (data.error) {
           console.error('API error:', data.error);
@@ -154,8 +173,24 @@ export default function Home() {
     }
   };
 
+  // Add a retry mechanism for initial load
   useEffect(() => {
-    fetchYards();
+    const loadYards = async () => {
+      try {
+        await fetchYards();
+      } catch (error) {
+        console.error('Initial fetch failed, retrying in 2 seconds...');
+        setTimeout(async () => {
+          try {
+            await fetchYards();
+          } catch (retryError) {
+            console.error('Retry also failed:', retryError);
+          }
+        }, 2000);
+      }
+    };
+    
+    loadYards();
   }, []);
 
   // Update the filter handlers to use the new filterYards function

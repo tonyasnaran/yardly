@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Box, Typography, Button, Container } from '@mui/material';
+import { Box, Typography, Button, Container, CircularProgress } from '@mui/material';
 
-export default function AuthError() {
+function ErrorContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const error = searchParams.get('error');
@@ -42,5 +42,26 @@ export default function AuthError() {
         </Button>
       </Box>
     </Container>
+  );
+}
+
+export default function AuthError() {
+  return (
+    <Suspense fallback={
+      <Container maxWidth="sm">
+        <Box
+          sx={{
+            mt: 8,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      </Container>
+    }>
+      <ErrorContent />
+    </Suspense>
   );
 } 

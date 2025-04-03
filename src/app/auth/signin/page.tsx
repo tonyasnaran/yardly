@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
-import { Box, Button, Container, Typography } from '@mui/material';
+import { Box, Button, Container, Typography, CircularProgress } from '@mui/material';
 import GoogleIcon from '@mui/icons-material/Google';
 
-export default function SignIn() {
+function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/';
@@ -52,5 +52,26 @@ export default function SignIn() {
         </Button>
       </Box>
     </Container>
+  );
+}
+
+export default function SignIn() {
+  return (
+    <Suspense fallback={
+      <Container maxWidth="sm">
+        <Box
+          sx={{
+            mt: 8,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      </Container>
+    }>
+      <SignInContent />
+    </Suspense>
   );
 } 

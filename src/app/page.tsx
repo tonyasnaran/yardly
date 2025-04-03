@@ -70,8 +70,8 @@ export default function Home() {
       setLoading(true);
       setError(null);
       
-      // Use relative URL for API requests
-      const apiUrl = '/api/yards';
+      // Use the current hostname for API requests
+      const apiUrl = `${window.location.origin}/api/yards`;
       
       console.log('Fetching yards from:', apiUrl);
       
@@ -80,6 +80,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
       });
       
       console.log('Response status:', response.status);

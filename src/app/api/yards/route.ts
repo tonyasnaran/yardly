@@ -85,30 +85,55 @@ const yards = [
 // Helper function to create CORS headers
 function corsHeaders() {
   return {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': 'https://www.goyardly.com',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Max-Age': '86400', // 24 hours
   };
 }
 
 // Handle OPTIONS requests for CORS preflight
-export async function OPTIONS() {
-  return NextResponse.json({}, { headers: corsHeaders() });
+export async function OPTIONS(request: NextRequest) {
+  // Get the origin from the request
+  const origin = request.headers.get('origin') || 'https://www.goyardly.com';
+  
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      ...corsHeaders(),
+      'Access-Control-Allow-Origin': origin,
+    },
+  });
 }
 
 // Export a static GET handler that doesn't use dynamic server features
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Get the origin from the request
+    const origin = request.headers.get('origin') || 'https://www.goyardly.com';
+    
     // Return all yards without filtering
     return NextResponse.json({
       yards: yards,
       total: yards.length
-    }, { headers: corsHeaders() });
+    }, { 
+      headers: {
+        ...corsHeaders(),
+        'Access-Control-Allow-Origin': origin,
+      }
+    });
   } catch (error) {
     console.error('Error fetching yards:', error);
     return NextResponse.json(
       { error: 'Failed to fetch yards', yards: [], total: 0 },
-      { status: 500, headers: corsHeaders() }
+      { 
+        status: 500, 
+        headers: {
+          ...corsHeaders(),
+          'Access-Control-Allow-Origin': request.headers.get('origin') || 'https://www.goyardly.com',
+        }
+      }
     );
   }
 }
@@ -144,16 +169,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get the origin from the request
+    const origin = request.headers.get('origin') || 'https://www.goyardly.com';
+
     // Return data in a consistent format
     return NextResponse.json({
       yards: filteredYards,
       total: filteredYards.length
-    }, { headers: corsHeaders() });
+    }, { 
+      headers: {
+        ...corsHeaders(),
+        'Access-Control-Allow-Origin': origin,
+      }
+    });
   } catch (error) {
     console.error('Error filtering yards:', error);
     return NextResponse.json(
       { error: 'Failed to filter yards', yards: [], total: 0 },
-      { status: 500, headers: corsHeaders() }
+      { 
+        status: 500, 
+        headers: {
+          ...corsHeaders(),
+          'Access-Control-Allow-Origin': request.headers.get('origin') || 'https://www.goyardly.com',
+        }
+      }
     );
   }
 }

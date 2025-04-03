@@ -82,13 +82,28 @@ const yards = [
   }
 ];
 
-export async function GET(request: NextRequest) {
+// Export a static GET handler that doesn't use dynamic server features
+export async function GET() {
   try {
-    // Use searchParams from the request object directly
-    const searchParams = request.nextUrl.searchParams;
-    const city = searchParams.get('city');
-    const guests = searchParams.get('guests');
-    const amenities = searchParams.get('amenities');
+    // Return all yards without filtering
+    return NextResponse.json({
+      yards: yards,
+      total: yards.length
+    });
+  } catch (error) {
+    console.error('Error fetching yards:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch yards', yards: [], total: 0 },
+      { status: 500 }
+    );
+  }
+}
+
+// Export a POST handler for filtered requests
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { city, guests, amenities } = body;
 
     // Filter yards based on search parameters
     let filteredYards = [...yards];
@@ -107,7 +122,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (amenities) {
-      const amenityList = amenities.split(',');
+      const amenityList = Array.isArray(amenities) ? amenities : [amenities];
       filteredYards = filteredYards.filter(yard => 
         amenityList.every(amenity => 
           yard.amenities.includes(amenity)
@@ -121,9 +136,9 @@ export async function GET(request: NextRequest) {
       total: filteredYards.length
     });
   } catch (error) {
-    console.error('Error fetching yards:', error);
+    console.error('Error filtering yards:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch yards', yards: [], total: 0 },
+      { error: 'Failed to filter yards', yards: [], total: 0 },
       { status: 500 }
     );
   }

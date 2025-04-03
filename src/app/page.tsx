@@ -75,6 +75,7 @@ export default function Home() {
         ? 'https://goyardly.com/api/yards' 
         : '/api/yards';
         
+      // First, get all yards
       const response = await fetch(apiUrl);
       
       if (!response.ok) {
@@ -99,28 +100,86 @@ export default function Home() {
     }
   };
 
+  // Add a new function for filtering yards
+  const filterYards = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Use absolute URL in production
+      const apiUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://goyardly.com/api/yards' 
+        : '/api/yards';
+      
+      // Prepare filter parameters
+      const filterParams = {
+        city: city || undefined,
+        guests: selectedGuests.length > 0 ? selectedGuests[0] : undefined,
+        amenities: selectedAmenities.length > 0 ? selectedAmenities : undefined
+      };
+      
+      // Only make a POST request if we have filters
+      if (filterParams.city || filterParams.guests || filterParams.amenities) {
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(filterParams),
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API responded with status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.error) {
+          console.error('API error:', data.error);
+          setError(data.error);
+          setYards([]);
+        } else {
+          setYards(data.yards || []);
+        }
+      } else {
+        // If no filters, just fetch all yards
+        fetchYards();
+      }
+    } catch (error) {
+      console.error('Error filtering yards:', error);
+      setError('Failed to filter yards. Please try again later.');
+      setYards([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchYards();
   }, []);
 
+  // Update the filter handlers to use the new filterYards function
   const handleGuestChange = (event: any) => {
     setSelectedGuests(event.target.value);
+    filterYards();
   };
 
   const handleAmenityChange = (event: any) => {
     setSelectedAmenities(event.target.value);
+    filterYards();
   };
 
-  const filteredYards = yards.filter(yard => {
-    const matchesGuests = selectedGuests.length === 0 || 
-      selectedGuests.includes(yard.guests.toString());
-    const matchesAmenities = selectedAmenities.length === 0 || 
-      selectedAmenities.every(amenity => yard.amenities.includes(amenity));
-    const matchesCity = !city || 
-      yard.city.toLowerCase().includes(city.toLowerCase());
-    
-    return matchesGuests && matchesAmenities && matchesCity;
-  });
+  const handleCityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setCity(event.target.value);
+    // Don't filter immediately on every keystroke, use debounce or call filterYards on blur
+  };
+
+  const handleCityBlur = () => {
+    filterYards();
+  };
+
+  // Remove the client-side filtering since we're now using the API
+  const filteredYards = yards;
 
   return (
     <Box>
@@ -139,7 +198,8 @@ export default function Home() {
             fullWidth
             label="Search by city"
             value={city}
-            onChange={(e) => setCity(e.target.value)}
+            onChange={handleCityChange}
+            onBlur={handleCityBlur}
             sx={{ mb: 2 }}
           />
           

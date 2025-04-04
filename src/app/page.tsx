@@ -278,14 +278,14 @@ export default function Home() {
         sx={{
           bgcolor: '#3A7D44',
           color: 'white',
-          py: { xs: 8, md: 12 },
+          py: { xs: 4, md: 8 },
           px: { xs: 2, md: 4 },
           textAlign: 'center',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: { xs: '50vh', md: '60vh' },
+          minHeight: { xs: '25vh', sm: '30vh', md: '60vh' },
           position: 'relative',
         }}
       >
@@ -296,14 +296,15 @@ export default function Home() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 4,
+            gap: { xs: 2, md: 4 },
+            py: { xs: 2, md: 4 },
           }}
         >
           <Typography
             variant="h1"
             sx={{
               fontWeight: 900,
-              fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
+              fontSize: { xs: '1.75rem', sm: '2rem', md: '3rem' },
               lineHeight: 1.2,
               letterSpacing: '-0.02em',
               textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
@@ -312,7 +313,7 @@ export default function Home() {
               maxWidth: '100%',
               overflow: 'visible',
               textOverflow: 'clip',
-              mb: 2,
+              mb: { xs: 1, md: 2 },
             }}
           >
             Your party, their yard
@@ -327,9 +328,9 @@ export default function Home() {
               '&:hover': {
                 bgcolor: 'rgba(255, 255, 255, 0.9)',
               },
-              px: 6,
-              py: 2,
-              fontSize: '1.2rem',
+              px: { xs: 4, md: 6 },
+              py: { xs: 1, md: 2 },
+              fontSize: { xs: '1rem', md: '1.2rem' },
               fontWeight: 'bold',
               borderRadius: '50px',
               boxShadow: '0 4px 6px rgba(0,0,0,0.1)',

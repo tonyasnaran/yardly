@@ -26,12 +26,14 @@ import {
   Divider,
   OutlinedInput,
   IconButton,
+  Grid,
 } from '@mui/material';
 import LocationOn from '@mui/icons-material/LocationOn';
 import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
 import Favorite from '@mui/icons-material/Favorite';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import Image from 'next/image';
 
 interface Yard {
   id: number;
@@ -271,74 +273,67 @@ export default function Home() {
     }
   };
 
+  const handleYardClick = (yardId: number) => {
+    router.push(`/yards/${yardId}`);
+  };
+
+  if (loading) {
+    return (
+      <Container sx={{ py: 8, textAlign: 'center' }}>
+        <CircularProgress />
+        <Typography sx={{ mt: 2 }}>Loading yards...</Typography>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container sx={{ py: 8, textAlign: 'center' }}>
+        <Typography color="error">{error}</Typography>
+      </Container>
+    );
+  }
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       {/* Hero Section */}
       <Box
         sx={{
-          bgcolor: '#3A7D44',
-          color: 'white',
-          py: { xs: 4, md: 8 },
-          px: { xs: 2, md: 4 },
-          textAlign: 'center',
+          position: 'relative',
+          height: '70vh',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: { xs: '25vh', sm: '30vh', md: '60vh' },
-          position: 'relative',
+          color: 'white',
+          textAlign: 'center',
+          mb: 8,
         }}
       >
-        <Container 
-          maxWidth="md"
+        <Image
+          src="/images/hero-image.jpg"
+          alt="Hero Image"
+          fill
+          style={{ objectFit: 'cover' }}
+          priority
+        />
+        <Box
           sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: { xs: 2, md: 4 },
-            py: { xs: 2, md: 4 },
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
           }}
-        >
-          <Typography
-            variant="h1"
-            sx={{
-              fontWeight: 900,
-              fontSize: { xs: '1.75rem', sm: '2rem', md: '3rem' },
-              lineHeight: 1.2,
-              letterSpacing: '-0.02em',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-              whiteSpace: 'nowrap',
-              color: 'white',
-              maxWidth: '100%',
-              overflow: 'visible',
-              textOverflow: 'clip',
-              mb: { xs: 1, md: 2 },
-            }}
-          >
-            Your party, their yard
+        />
+        <Box sx={{ position: 'relative', maxWidth: 'md', p: 4 }}>
+          <Typography variant="h2" component="h1" sx={{ mb: 4, fontWeight: 'bold' }}>
+            Find Your Perfect Outdoor Space
           </Typography>
-          <Button
-            variant="contained"
-            size="large"
-            onClick={() => router.push('/about')}
-            sx={{
-              bgcolor: 'white',
-              color: '#3A7D44',
-              '&:hover': {
-                bgcolor: 'rgba(255, 255, 255, 0.9)',
-              },
-              px: { xs: 4, md: 6 },
-              py: { xs: 1, md: 2 },
-              fontSize: { xs: '1rem', md: '1.2rem' },
-              fontWeight: 'bold',
-              borderRadius: '50px',
-              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-            }}
-          >
-            Discover How It Works
-          </Button>
-        </Container>
+          <Typography variant="h5" sx={{ mb: 4 }}>
+            Discover and book unique yards for your next gathering
+          </Typography>
+        </Box>
       </Box>
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -427,139 +422,50 @@ export default function Home() {
         </Typography>
 
         {/* Yard Listings */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 3 }}>
-          {loading ? (
-            // Loading state
-            Array.from({ length: 3 }).map((_, index) => (
-              <Card key={index} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <Skeleton variant="rectangular" height={200} />
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Skeleton variant="text" height={32} />
-                  <Skeleton variant="text" height={24} />
-                  <Skeleton variant="text" height={24} />
-                </CardContent>
-              </Card>
-            ))
-          ) : error ? (
-            // Error state
-            <Box sx={{ gridColumn: '1 / -1' }}>
-              <Alert severity="error" sx={{ mt: 2 }}>
-                {error}
-              </Alert>
-            </Box>
-          ) : filteredYards.length === 0 ? (
-            // Empty state
-            <Box sx={{ gridColumn: '1 / -1' }}>
-              <Alert severity="info" sx={{ mt: 2 }}>
-                No yards found. Try adjusting your search filters.
-              </Alert>
-            </Box>
-          ) : (
-            // Success state
-            filteredYards.map((yard) => (
-              <Card 
-                key={yard.id}
-                sx={{ 
-                  height: '100%', 
-                  display: 'flex', 
+        <Grid container spacing={4}>
+          {filteredYards.map((yard) => (
+            <Grid item key={yard.id} xs={12} sm={6} md={4}>
+              <Card
+                sx={{
+                  height: '100%',
+                  display: 'flex',
                   flexDirection: 'column',
-                  position: 'relative',
+                  cursor: 'pointer',
                   '&:hover': {
                     transform: 'translateY(-4px)',
-                    transition: 'transform 0.2s ease-in-out',
-                    boxShadow: 3
-                  }
+                    boxShadow: 4,
+                    transition: 'all 0.2s ease-in-out',
+                  },
                 }}
+                onClick={() => handleYardClick(yard.id)}
               >
-                <IconButton
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleFavorite(yard.id);
-                  }}
-                  sx={{
-                    position: 'absolute',
-                    bottom: 8,
-                    left: 8,
-                    zIndex: 2,
-                    bgcolor: 'white',
-                    '&:hover': {
-                      bgcolor: 'rgba(255, 255, 255, 0.9)',
-                    },
-                  }}
-                >
-                  {favorites.includes(yard.id) ? (
-                    <Favorite sx={{ color: '#3A7D44' }} />
-                  ) : (
-                    <FavoriteBorder sx={{ color: '#3A7D44' }} />
-                  )}
-                </IconButton>
-                
-                <CardActionArea 
-                  onClick={() => router.push(`/yards/${yard.id}`)}
-                  sx={{ flexGrow: 1 }}
-                >
+                <Box sx={{ position: 'relative', pt: '56.25%' }}>
                   <CardMedia
                     component="img"
-                    height="200"
                     image={yard.image}
                     alt={yard.title}
-                  />
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography gutterBottom variant="h6" component="h2">
-                      {yard.title}
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                      <Chip 
-                        label={`Up to ${yard.guests} guests`}
-                        size="small"
-                        sx={{ bgcolor: '#FFD166', color: '#3A7D44' }}
-                      />
-                      {yard.amenities.slice(0, 3).map((amenity) => (
-                        <Chip
-                          key={amenity}
-                          label={AMENITY_OPTIONS.find(opt => opt.value === amenity)?.label || amenity}
-                          size="small"
-                          sx={{ bgcolor: 'rgba(58, 125, 68, 0.1)', color: '#3A7D44' }}
-                        />
-                      ))}
-                      {yard.amenities.length > 3 && (
-                        <Chip
-                          label={`+${yard.amenities.length - 3} more`}
-                          size="small"
-                          sx={{ bgcolor: 'rgba(58, 125, 68, 0.1)', color: '#3A7D44' }}
-                        />
-                      )}
-                    </Box>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                      {yard.city}
-                    </Typography>
-                    <Typography variant="h6" color="primary">
-                      ${yard.price}/hour
-                    </Typography>
-                  </CardContent>
-                </CardActionArea>
-                <Box sx={{ p: 2, pt: 0 }}>
-                  <Button
-                    variant="contained"
-                    fullWidth
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      router.push(`/yards/${yard.id}/book`);
-                    }}
                     sx={{
-                      bgcolor: '#3A7D44',
-                      '&:hover': {
-                        bgcolor: '#2D5F35',
-                      },
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
                     }}
-                  >
-                    Book Now
-                  </Button>
+                  />
                 </Box>
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Typography gutterBottom variant="h6" component="h3">
+                    {yard.title}
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    ${yard.price} per hour
+                  </Typography>
+                </CardContent>
               </Card>
-            ))
-          )}
-        </Box>
+            </Grid>
+          ))}
+        </Grid>
       </Container>
     </Box>
   );

@@ -1,55 +1,35 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Container,
   Box,
   Typography,
-  Card,
-  CardMedia,
-  CardContent,
-  Rating,
   Button,
-  Divider,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
   Paper,
+  Grid,
+  CircularProgress,
 } from '@mui/material';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import GroupIcon from '@mui/icons-material/Group';
-import LocalActivityIcon from '@mui/icons-material/LocalActivity';
-import StarIcon from '@mui/icons-material/Star';
-import { useParams } from 'next/navigation';
 import Image from 'next/image';
 
 interface Yard {
   id: number;
   title: string;
-  city: string;
   price: number;
-  guests: number;
   image: string;
-  amenities: string[];
-  description: string;
-  rating: number;
-  reviews: number;
-  nearbyAttractions: string[];
 }
 
-export default function YardPage() {
-  const params = useParams();
+export default function YardDetailPage({ params }: { params: { id: string } }) {
+  const router = useRouter();
   const [yard, setYard] = useState<Yard | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchYardDetails = async () => {
       try {
-        const id = params?.id;
-        if (!id) return;
-
-        const response = await fetch(`/api/yards/${id}`);
+        const response = await fetch(`/api/yard/${params.id}`);
         if (!response.ok) {
           throw new Error('Failed to fetch yard details');
         }
@@ -57,150 +37,80 @@ export default function YardPage() {
         setYard(data);
       } catch (error) {
         console.error('Error fetching yard details:', error);
+        setError('Failed to load yard details');
       } finally {
         setLoading(false);
       }
     };
 
     fetchYardDetails();
-  }, [params?.id]);
+  }, [params.id]);
 
-  if (!yard) {
+  if (loading) {
     return (
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          {loading ? 'Loading...' : 'Yard not found'}
-        </Typography>
+      <Container sx={{ py: 8, textAlign: 'center' }}>
+        <CircularProgress />
+        <Typography sx={{ mt: 2 }}>Loading yard details...</Typography>
+      </Container>
+    );
+  }
+
+  if (error || !yard) {
+    return (
+      <Container sx={{ py: 8, textAlign: 'center' }}>
+        <Typography color="error">{error || 'Yard not found'}</Typography>
+        <Button
+          variant="contained"
+          onClick={() => router.push('/')}
+          sx={{ mt: 2 }}
+        >
+          Return to Home
+        </Button>
       </Container>
     );
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Box sx={{ display: 'flex', gap: 4, flexDirection: { xs: 'column', md: 'row' } }}>
-        {/* Main Content */}
-        <Box sx={{ flex: '1 1 auto' }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            {yard.title}
-          </Typography>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <LocationOnIcon sx={{ color: 'text.secondary', mr: 1 }} />
-            <Typography variant="subtitle1" color="text.secondary">
-              {yard.city}
-            </Typography>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Grid container spacing={4}>
+        <Grid item xs={12} md={8}>
+          <Box sx={{ position: 'relative', width: '100%', height: '500px' }}>
+            <Image
+              src={yard.image}
+              alt={yard.title}
+              fill
+              style={{ objectFit: 'cover' }}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              priority
+            />
           </Box>
-
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 4, mb: 4 }}>
-            {/* Main content */}
-            <Box sx={{ flex: 2 }}>
-              <Box sx={{ position: 'relative', width: '100%', height: '400px', mb: 4 }}>
-                <Image
-                  src={yard.image}
-                  alt={yard.title}
-                  fill
-                  style={{ objectFit: 'cover' }}
-                  priority
-                />
-              </Box>
-            </Box>
-          </Box>
-
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              About this space
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h4" component="h1" gutterBottom>
+              {yard.title}
             </Typography>
-            <Typography variant="body1" color="text.secondary">
-              {yard.description}
+            <Typography variant="h5" color="primary" gutterBottom>
+              ${yard.price} per hour
             </Typography>
-          </Box>
-
-          <Divider sx={{ mb: 4 }} />
-
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              Amenities
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-              {yard.amenities.map((amenity, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: { xs: '100%', sm: 'calc(50% - 8px)' }
-                  }}
-                >
-                  <LocalActivityIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                  <Typography variant="body1">{amenity}</Typography>
-                </Box>
-              ))}
-            </Box>
-          </Box>
-
-          <Divider sx={{ mb: 4 }} />
-
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              Nearby Attractions
-            </Typography>
-            <List>
-              {yard.nearbyAttractions.map((attraction, index) => (
-                <ListItem key={index}>
-                  <ListItemIcon>
-                    <LocationOnIcon color="primary" />
-                  </ListItemIcon>
-                  <ListItemText primary={attraction} />
-                </ListItem>
-              ))}
-            </List>
-          </Box>
-        </Box>
-
-        {/* Booking Sidebar */}
-        <Box sx={{ width: { xs: '100%', md: '380px' } }}>
-          <Paper
-            elevation={3}
-            sx={{
-              p: 3,
-              position: { md: 'sticky' },
-              top: { md: '24px' },
-              borderRadius: 2,
-            }}
-          >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h5">${yard.price}/hour</Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <StarIcon sx={{ color: 'primary.main', mr: 0.5 }} />
-                <Typography variant="body1">
-                  {yard.rating} ({yard.reviews} reviews)
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-              <GroupIcon sx={{ color: 'text.secondary', mr: 1 }} />
-              <Typography variant="body1">
-                Up to {yard.guests} guests
-              </Typography>
-            </Box>
-
             <Button
               variant="contained"
-              color="primary"
               fullWidth
               size="large"
-              sx={{ mb: 2 }}
+              onClick={() => router.push(`/yards/${yard.id}/book`)}
+              sx={{
+                mt: 3,
+                bgcolor: '#3A7D44',
+                '&:hover': {
+                  bgcolor: '#2D5F35',
+                },
+              }}
             >
               Book Now
             </Button>
-
-            <Typography variant="body2" color="text.secondary" align="center">
-              You won't be charged yet
-            </Typography>
           </Paper>
-        </Box>
-      </Box>
+        </Grid>
+      </Grid>
     </Container>
   );
 } 

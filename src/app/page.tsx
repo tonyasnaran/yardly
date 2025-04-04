@@ -585,12 +585,14 @@ export default function Home() {
                             />
                           )}
                         </Box>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                          {yard.city}
-                        </Typography>
-                        <Typography variant="h6" color="primary">
-                          ${yard.price}/hour
-                        </Typography>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            {yard.city}
+                          </Typography>
+                          <Typography variant="h6" color="primary">
+                            ${yard.price}/hour
+                          </Typography>
+                        </Box>
                       </CardContent>
                     </CardActionArea>
                     <Box sx={{ p: 2, pt: 0 }}>

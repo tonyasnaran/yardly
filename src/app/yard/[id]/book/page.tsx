@@ -16,10 +16,12 @@ import {
   TableContainer,
   TableRow,
   Alert,
+  CircularProgress,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import Image from 'next/image';
 
 interface BookingDetails {
   checkIn: Date | null;
@@ -27,15 +29,41 @@ interface BookingDetails {
   guests: number;
 }
 
+interface YardDetails {
+  id: number;
+  title: string;
+  price: number;
+  image: string;
+}
+
 export default function BookYardPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [yard, setYard] = useState<YardDetails | null>(null);
   const [bookingDetails, setBookingDetails] = useState<BookingDetails>({
     checkIn: null,
     checkOut: null,
     guests: 1,
   });
+
+  useEffect(() => {
+    const fetchYardDetails = async () => {
+      try {
+        const response = await fetch(`/api/yards/${params.id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch yard details');
+        }
+        const data = await response.json();
+        setYard(data);
+      } catch (error) {
+        console.error('Error fetching yard details:', error);
+        setError('Failed to load yard details');
+      }
+    };
+
+    fetchYardDetails();
+  }, [params.id]);
 
   const handleReserve = async () => {
     console.log('Reserve button clicked');
@@ -57,51 +85,30 @@ export default function BookYardPage({ params }: { params: { id: string } }) {
 
       console.log('Sending request with body:', requestBody);
 
-      // Get the base URL for the environment
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
-      const apiUrl = `${baseUrl}/api/create-checkout-session`;
-      console.log('Making request to:', apiUrl);
-
-      const response = await fetch(apiUrl, {
+      const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
-        cache: 'no-store',
-      }).catch(error => {
-        console.error('Fetch error:', error);
-        throw new Error('Network error when trying to create checkout session');
       });
-
-      if (!response) {
-        throw new Error('No response received from server');
-      }
 
       console.log('Received response:', response.status, response.statusText);
 
-      let data;
-      try {
-        const textResponse = await response.text();
-        console.log('Raw response:', textResponse);
-        data = JSON.parse(textResponse);
-        console.log('Parsed response data:', data);
-      } catch (e) {
-        console.error('Error parsing response:', e);
-        throw new Error('Failed to parse server response');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create checkout session');
       }
 
-      if (!response.ok) {
-        throw new Error(data.error || `Server error: ${response.status}`);
-      }
+      const data = await response.json();
+      console.log('Response data:', data);
 
       if (!data.sessionId) {
         throw new Error('No session ID returned from the server');
       }
 
-      const checkoutUrl = `/checkout/${data.sessionId}`;
-      console.log('Redirecting to:', checkoutUrl);
-      router.push(checkoutUrl);
+      console.log('Redirecting to checkout with session ID:', data.sessionId);
+      router.push(`/checkout/${data.sessionId}`);
     } catch (error) {
       console.error('Error in handleReserve:', error);
       setError(error instanceof Error ? error.message : 'Failed to create checkout session');
@@ -116,17 +123,26 @@ export default function BookYardPage({ params }: { params: { id: string } }) {
     return Math.ceil(diff / (1000 * 60 * 60));
   };
 
-  const baseRate = 50;
   const hours = calculateHours();
+  const baseRate = yard?.price || 50;
   const subtotal = baseRate * hours;
   const serviceFee = subtotal * 0.1;
   const total = subtotal + serviceFee;
+
+  if (!yard) {
+    return (
+      <Container maxWidth="md" sx={{ py: 8, textAlign: 'center' }}>
+        <CircularProgress />
+        <Typography sx={{ mt: 2 }}>Loading yard details...</Typography>
+      </Container>
+    );
+  }
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Container maxWidth="md" sx={{ py: 4 }}>
         <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
-          Book Your Yard
+          Book {yard.title}
         </Typography>
 
         {error && (
@@ -145,19 +161,13 @@ export default function BookYardPage({ params }: { params: { id: string } }) {
                 <DateTimePicker
                   label="Check-in"
                   value={bookingDetails.checkIn}
-                  onChange={(date) => {
-                    console.log('Check-in date changed:', date);
-                    setBookingDetails({ ...bookingDetails, checkIn: date });
-                  }}
+                  onChange={(date) => setBookingDetails({ ...bookingDetails, checkIn: date })}
                   sx={{ width: '100%', mb: 2 }}
                 />
                 <DateTimePicker
                   label="Check-out"
                   value={bookingDetails.checkOut}
-                  onChange={(date) => {
-                    console.log('Check-out date changed:', date);
-                    setBookingDetails({ ...bookingDetails, checkOut: date });
-                  }}
+                  onChange={(date) => setBookingDetails({ ...bookingDetails, checkOut: date })}
                   sx={{ width: '100%' }}
                 />
               </Box>
@@ -165,11 +175,7 @@ export default function BookYardPage({ params }: { params: { id: string } }) {
                 label="Number of Guests"
                 type="number"
                 value={bookingDetails.guests}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value);
-                  console.log('Guests changed:', value);
-                  setBookingDetails({ ...bookingDetails, guests: value });
-                }}
+                onChange={(e) => setBookingDetails({ ...bookingDetails, guests: parseInt(e.target.value) })}
                 fullWidth
                 sx={{ mb: 3 }}
                 inputProps={{ min: 1 }}
@@ -216,14 +222,7 @@ export default function BookYardPage({ params }: { params: { id: string } }) {
                 variant="contained"
                 fullWidth
                 size="large"
-                onClick={() => {
-                  console.log('Button clicked, current state:', {
-                    loading,
-                    bookingDetails,
-                    params
-                  });
-                  handleReserve();
-                }}
+                onClick={handleReserve}
                 disabled={loading || !bookingDetails.checkIn || !bookingDetails.checkOut}
                 sx={{
                   mt: 3,

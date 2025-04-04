@@ -6,6 +6,37 @@ import { authOptions } from '@/lib/auth';
 // In a real application, this would be a database
 const userFavorites = new Map<string, number[]>();
 
+// Mock data for development
+const yards = [
+  {
+    id: 1,
+    title: 'Luxury Backyard Oasis',
+    price: 50,
+    image: '/images/yard1.jpg',
+    city: 'Los Angeles',
+    guests: 10,
+    amenities: ['Pool', 'BBQ', 'Fire Pit', 'WiFi'],
+  },
+  {
+    id: 2,
+    title: 'Modern Urban Garden',
+    price: 35,
+    image: '/images/yard2.jpg',
+    city: 'San Francisco',
+    guests: 8,
+    amenities: ['Garden', 'Outdoor Kitchen', 'WiFi'],
+  },
+  {
+    id: 3,
+    title: 'Cozy Backyard Retreat',
+    price: 25,
+    image: '/images/yard3.jpg',
+    city: 'New York',
+    guests: 6,
+    amenities: ['Fire Pit', 'BBQ', 'WiFi'],
+  },
+];
+
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
   
@@ -66,11 +97,13 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const userId = session.user.id;
-    const favorites = userFavorites.get(userId) || [];
+    // In a real application, you would fetch the user's favorites from a database
+    // For now, we'll return a mock list of favorite yard IDs
+    const favoriteIds = [1, 2]; // Mock favorite yard IDs
+    const favoriteYards = yards.filter(yard => favoriteIds.includes(yard.id));
 
     return new NextResponse(
-      JSON.stringify({ favorites }),
+      JSON.stringify({ favorites: favoriteYards }),
       {
         status: 200,
         headers: {

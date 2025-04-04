@@ -36,23 +36,38 @@ export default function BookYardPage({ params }: { params: { id: string } }) {
 
   const handleReserve = async () => {
     try {
-      const response = await fetch('/api/create-checkout-session', {
+      // Get the base URL from environment variable or use relative path
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
+      
+      const response = await fetch(`${baseUrl}/api/create-checkout-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           yardId: params.id,
-          checkIn: bookingDetails.checkIn,
-          checkOut: bookingDetails.checkOut,
+          checkIn: bookingDetails.checkIn?.toISOString(),
+          checkOut: bookingDetails.checkOut?.toISOString(),
           guests: bookingDetails.guests,
         }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create checkout session');
+      }
+
       const { sessionId } = await response.json();
+      
+      if (!sessionId) {
+        throw new Error('No session ID returned from the server');
+      }
+
+      console.log('Redirecting to checkout with session ID:', sessionId);
       router.push(`/checkout/${sessionId}`);
     } catch (error) {
       console.error('Error creating checkout session:', error);
+      // You might want to show an error message to the user here
     }
   };
 

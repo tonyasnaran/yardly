@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import {
   Container,
   Typography,
@@ -20,53 +21,56 @@ import {
   FormHelperText,
   Alert,
 } from '@mui/material';
-import { useSession } from 'next-auth/react';
 
 const steps = ['Personal Information', 'Yard Details', 'Pricing & Availability'];
+
+interface FormData {
+  // Personal Information
+  fullName: string;
+  email: string;
+  phone: string;
+  address: string;
+  
+  // Yard Details
+  yardSize: string;
+  eventTypes: string;
+  description: string;
+  amenities: string[];
+  
+  // Pricing & Availability
+  pricePerHour: string;
+  availability: string;
+}
 
 export default function ListYourYardPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const [activeStep, setActiveStep] = useState(0);
-  const [formData, setFormData] = useState({
-    // Personal Information
+  const [formData, setFormData] = useState<FormData>({
     fullName: '',
     email: '',
     phone: '',
     address: '',
-    
-    // Yard Details
     yardSize: '',
     eventTypes: '',
     description: '',
-    amenities: [] as string[],
-    
-    // Pricing & Availability
+    amenities: [],
     pricePerHour: '',
     availability: '',
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [submitMessage, setSubmitMessage] = useState('');
 
   const handleNext = () => {
-    // Validate current step
-    const currentErrors = validateStep(activeStep);
-    if (Object.keys(currentErrors).length > 0) {
-      setErrors(currentErrors);
-      return;
-    }
-
     if (activeStep === steps.length - 1) {
       handleSubmit();
     } else {
       setActiveStep((prevStep) => prevStep + 1);
-      setErrors({});
     }
   };
 
   const handleBack = () => {
     setActiveStep((prevStep) => prevStep - 1);
-    setErrors({});
   };
 
   const handleChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,59 +78,24 @@ export default function ListYourYardPage() {
       ...formData,
       [field]: event.target.value,
     });
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors({
-        ...errors,
-        [field]: '',
-      });
-    }
-  };
-
-  const validateStep = (step: number): Record<string, string> => {
-    const newErrors: Record<string, string> = {};
-
-    switch (step) {
-      case 0:
-        if (!formData.fullName) newErrors.fullName = 'Full name is required';
-        if (!formData.email) newErrors.email = 'Email is required';
-        if (!formData.phone) newErrors.phone = 'Phone number is required';
-        if (!formData.address) newErrors.address = 'Address is required';
-        break;
-      case 1:
-        if (!formData.yardSize) newErrors.yardSize = 'Yard size is required';
-        if (!formData.eventTypes) newErrors.eventTypes = 'Event types are required';
-        if (!formData.description) newErrors.description = 'Description is required';
-        break;
-      case 2:
-        if (!formData.pricePerHour) newErrors.pricePerHour = 'Price per hour is required';
-        if (!formData.availability) newErrors.availability = 'Availability is required';
-        break;
-    }
-
-    return newErrors;
   };
 
   const handleSubmit = async () => {
+    setSubmitStatus('loading');
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Show success message
-      setFormData(prev => ({
-        ...prev,
-        success: 'Your yard has been submitted successfully! We will review it shortly.'
-      }));
+      setSubmitStatus('success');
+      setSubmitMessage('Your yard has been submitted successfully! We will review it shortly.');
       
       // Redirect to home page after 3 seconds
       setTimeout(() => {
         router.push('/');
       }, 3000);
     } catch (error) {
-      setFormData(prev => ({
-        ...prev,
-        error: 'Failed to submit your yard. Please try again.'
-      }));
+      setSubmitStatus('error');
+      setSubmitMessage('Failed to submit your yard. Please try again.');
     }
   };
 
@@ -142,8 +111,6 @@ export default function ListYourYardPage() {
                 label="Full Name"
                 value={formData.fullName}
                 onChange={handleChange('fullName')}
-                error={!!errors.fullName}
-                helperText={errors.fullName}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -154,8 +121,6 @@ export default function ListYourYardPage() {
                 type="email"
                 value={formData.email}
                 onChange={handleChange('email')}
-                error={!!errors.email}
-                helperText={errors.email}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -165,8 +130,6 @@ export default function ListYourYardPage() {
                 label="Phone Number"
                 value={formData.phone}
                 onChange={handleChange('phone')}
-                error={!!errors.phone}
-                helperText={errors.phone}
               />
             </Grid>
             <Grid item xs={12}>
@@ -176,8 +139,6 @@ export default function ListYourYardPage() {
                 label="Address"
                 value={formData.address}
                 onChange={handleChange('address')}
-                error={!!errors.address}
-                helperText={errors.address}
               />
             </Grid>
           </Grid>
@@ -193,8 +154,6 @@ export default function ListYourYardPage() {
                 type="number"
                 value={formData.yardSize}
                 onChange={handleChange('yardSize')}
-                error={!!errors.yardSize}
-                helperText={errors.yardSize}
               />
             </Grid>
             <Grid item xs={12}>
@@ -204,8 +163,6 @@ export default function ListYourYardPage() {
                 label="Types of Events"
                 value={formData.eventTypes}
                 onChange={handleChange('eventTypes')}
-                error={!!errors.eventTypes}
-                helperText={errors.eventTypes}
                 placeholder="e.g., Birthday parties, weddings, corporate events"
               />
             </Grid>
@@ -218,8 +175,6 @@ export default function ListYourYardPage() {
                 label="Description"
                 value={formData.description}
                 onChange={handleChange('description')}
-                error={!!errors.description}
-                helperText={errors.description}
                 placeholder="Describe your yard, its features, and what makes it special"
               />
             </Grid>
@@ -260,8 +215,6 @@ export default function ListYourYardPage() {
                 type="number"
                 value={formData.pricePerHour}
                 onChange={handleChange('pricePerHour')}
-                error={!!errors.pricePerHour}
-                helperText={errors.pricePerHour}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -271,8 +224,6 @@ export default function ListYourYardPage() {
                 label="Availability"
                 value={formData.availability}
                 onChange={handleChange('availability')}
-                error={!!errors.availability}
-                helperText={errors.availability}
                 placeholder="e.g., Weekends, Evenings, 24/7"
               />
             </Grid>
@@ -313,11 +264,11 @@ export default function ListYourYardPage() {
 
         {submitStatus === 'success' ? (
           <Alert severity="success" sx={{ mb: 3 }}>
-            {formData.success}
+            {submitMessage}
           </Alert>
         ) : submitStatus === 'error' ? (
           <Alert severity="error" sx={{ mb: 3 }}>
-            {formData.error}
+            {submitMessage}
           </Alert>
         ) : (
           <>

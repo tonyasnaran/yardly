@@ -80,9 +80,13 @@ export async function POST(request: Request) {
       total,
     });
 
-    // Get the request URL to construct absolute URLs
-    const requestUrl = new URL(request.url);
-    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+    // Get the base URL for the environment
+    let baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    if (!baseUrl) {
+      // Fallback to request URL if environment variable is not set
+      const requestUrl = new URL(request.url);
+      baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+    }
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
@@ -101,8 +105,8 @@ export async function POST(request: Request) {
         },
       ],
       mode: 'payment',
-      success_url: `${baseUrl}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/yards/${yardId}`,
+      success_url: `${baseUrl}/checkout/${'{CHECKOUT_SESSION_ID}'}`,
+      cancel_url: `${baseUrl}/yards/${yardId}/book`,
       metadata: {
         yardId: yardId.toString(),
         checkIn: checkIn.toString(),

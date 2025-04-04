@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import {
@@ -43,7 +43,7 @@ interface FormData {
 }
 
 export default function ListYourYardPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState<FormData>({
@@ -61,6 +61,12 @@ export default function ListYourYardPage() {
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [submitMessage, setSubmitMessage] = useState('');
 
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin');
+    }
+  }, [status, router]);
+
   const handleNext = () => {
     if (activeStep === steps.length - 1) {
       handleSubmit();
@@ -73,7 +79,7 @@ export default function ListYourYardPage() {
     setActiveStep((prevStep) => prevStep - 1);
   };
 
-  const handleChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (field: keyof FormData) => (event: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
       [field]: event.target.value,
@@ -234,8 +240,7 @@ export default function ListYourYardPage() {
     }
   };
 
-  if (!session) {
-    router.push('/auth/signin');
+  if (status === 'loading' || status === 'unauthenticated') {
     return null;
   }
 

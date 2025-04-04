@@ -272,8 +272,63 @@ export default function Home() {
   };
 
   return (
-    <Box>
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <AppBar position="static" sx={{ bgcolor: '#3A7D44' }}>
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            Yardly
+          </Typography>
+          <Button color="inherit" onClick={() => router.push('/auth/signin')}>
+            Sign In
+          </Button>
+        </Toolbar>
+      </AppBar>
+
+      {/* Hero Section */}
+      <Box
+        sx={{
+          bgcolor: '#3A7D44',
+          color: 'white',
+          py: { xs: 8, md: 12 },
+          px: { xs: 2, md: 4 },
+          textAlign: 'center',
+        }}
+      >
+        <Container maxWidth="md">
+          <Typography
+            variant="h2"
+            component="h1"
+            sx={{
+              fontWeight: 'bold',
+              mb: 4,
+              fontSize: { xs: '2.5rem', md: '3.5rem' },
+              lineHeight: 1.2,
+            }}
+          >
+            Your party, their yard
+          </Typography>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={() => router.push('/about')}
+            sx={{
+              bgcolor: 'white',
+              color: '#3A7D44',
+              '&:hover': {
+                bgcolor: 'rgba(255, 255, 255, 0.9)',
+              },
+              px: 4,
+              py: 1.5,
+              fontSize: '1.1rem',
+              fontWeight: 'bold',
+            }}
+          >
+            Discover How It Works
+          </Button>
+        </Container>
+      </Box>
+
+      <Container maxWidth="lg" sx={{ py: 4 }}>
         {/* Search Section */}
         <Box sx={{ mb: 4 }}>
           <TextField

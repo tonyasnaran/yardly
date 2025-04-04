@@ -294,10 +294,12 @@ export default function Home() {
             sx={{
               fontWeight: 900,
               mb: 6,
-              fontSize: { xs: '3rem', sm: '4rem', md: '5rem' },
-              lineHeight: 1.1,
+              fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4rem' },
+              lineHeight: 1,
               letterSpacing: '-0.02em',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+              whiteSpace: 'nowrap',
+              color: 'white',
             }}
           >
             Your party, their yard

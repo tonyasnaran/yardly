@@ -1,71 +1,44 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Container,
   Box,
   Typography,
-  Card,
-  CardMedia,
-  CardContent,
-  Rating,
   Button,
-  Divider,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
+  Grid,
+  CircularProgress,
   TextField,
-  Stack,
+  Alert,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { LocalizationProvider, DateTimePicker } from '@mui/x-date-pickers';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import GroupIcon from '@mui/icons-material/Group';
-import LocalActivityIcon from '@mui/icons-material/LocalActivity';
-import StarIcon from '@mui/icons-material/Star';
-import { useParams } from 'next/navigation';
-import { format } from 'date-fns';
 import Image from 'next/image';
 
 interface Yard {
   id: number;
   title: string;
-  city: string;
   price: number;
-  guests: number;
   image: string;
-  amenities: string[];
-  description: string;
-  rating: number;
-  reviews: number;
-  nearbyAttractions: string[];
 }
 
-export default function BookingPage() {
-  const params = useParams();
+export default function BookingPage({ params }: { params: { id: string } }) {
+  const router = useRouter();
   const [yard, setYard] = useState<Yard | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [checkIn, setCheckIn] = useState<Date | null>(null);
   const [checkOut, setCheckOut] = useState<Date | null>(null);
-  const [totalHours, setTotalHours] = useState(0);
-  const [baseRate, setBaseRate] = useState(0);
-  const [serviceFee, setServiceFee] = useState(0);
-  const [totalCost, setTotalCost] = useState(0);
+  const [guests, setGuests] = useState<number>(1);
+  const [bookingError, setBookingError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchYardDetails = async () => {
       try {
-        const id = params?.id;
-        if (!id) return;
-
-        const response = await fetch(`/api/yards/${id}`);
+        const response = await fetch(`/api/yard/${params.id}`);
         if (!response.ok) {
           throw new Error('Failed to fetch yard details');
         }
@@ -73,231 +46,143 @@ export default function BookingPage() {
         setYard(data);
       } catch (error) {
         console.error('Error fetching yard details:', error);
+        setError('Failed to load yard details');
       } finally {
         setLoading(false);
       }
     };
 
     fetchYardDetails();
-  }, [params?.id]);
+  }, [params.id]);
 
-  useEffect(() => {
-    if (checkIn && checkOut && yard) {
-      const hours = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60));
-      setTotalHours(hours);
-      const base = hours * yard.price;
-      setBaseRate(base);
-      const fee = Math.round(base * 0.1); // 10% service fee
-      setServiceFee(fee);
-      setTotalCost(base + fee);
-    } else {
-      setTotalHours(0);
-      setBaseRate(0);
-      setServiceFee(0);
-      setTotalCost(0);
+  const handleReserve = async () => {
+    if (!checkIn || !checkOut || !guests) {
+      setBookingError('Please fill in all required fields');
+      return;
     }
-  }, [checkIn, checkOut, yard]);
 
-  const isBookingComplete = checkIn && checkOut && totalHours > 0;
+    try {
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          yardId: params.id,
+          checkIn: checkIn.toISOString(),
+          checkOut: checkOut.toISOString(),
+          guests,
+        }),
+      });
 
-  if (!yard) {
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session');
+      }
+
+      const { sessionId } = await response.json();
+      router.push(`/checkout/${sessionId}`);
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      setBookingError('Failed to create booking. Please try again.');
+    }
+  };
+
+  if (loading) {
     return (
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          {loading ? 'Loading...' : 'Yard not found'}
-        </Typography>
+      <Container sx={{ py: 8, textAlign: 'center' }}>
+        <CircularProgress />
+        <Typography sx={{ mt: 2 }}>Loading yard details...</Typography>
+      </Container>
+    );
+  }
+
+  if (error || !yard) {
+    return (
+      <Container sx={{ py: 8, textAlign: 'center' }}>
+        <Typography color="error">{error || 'Yard not found'}</Typography>
+        <Button
+          variant="contained"
+          onClick={() => router.push('/')}
+          sx={{ mt: 2 }}
+        >
+          Return to Home
+        </Button>
       </Container>
     );
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Box sx={{ display: 'flex', gap: 4, flexDirection: { xs: 'column', md: 'row' } }}>
-        {/* Main Content */}
-        <Box sx={{ flex: '1 1 auto' }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            {yard.title}
-          </Typography>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <LocationOnIcon sx={{ color: 'text.secondary', mr: 1 }} />
-            <Typography variant="subtitle1" color="text.secondary">
-              {yard.city}
-            </Typography>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Grid container spacing={4}>
+        <Grid item xs={12} md={8}>
+          <Box sx={{ position: 'relative', width: '100%', height: '500px' }}>
+            <Image
+              src={yard.image}
+              alt={yard.title}
+              fill
+              style={{ objectFit: 'cover' }}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              priority
+            />
           </Box>
-
-          <Box sx={{ mb: 4 }}>
-            <Box sx={{ position: 'relative', width: '100%', height: '400px', mb: 4 }}>
-              <Image
-                src={yard.image}
-                alt={yard.title}
-                fill
-                style={{ objectFit: 'cover' }}
-                priority
-              />
-            </Box>
-          </Box>
-
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              About this space
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h4" component="h1" gutterBottom>
+              {yard.title}
             </Typography>
-            <Typography variant="body1" color="text.secondary">
-              {yard.description}
-            </Typography>
-          </Box>
-
-          <Divider sx={{ mb: 4 }} />
-
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              Amenities
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-              {yard.amenities.map((amenity, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: { xs: '100%', sm: 'calc(50% - 8px)' }
-                  }}
-                >
-                  <LocalActivityIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                  <Typography variant="body1">{amenity}</Typography>
-                </Box>
-              ))}
-            </Box>
-          </Box>
-
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              Nearby Attractions
-            </Typography>
-            <List>
-              {yard.nearbyAttractions.map((attraction, index) => (
-                <ListItem key={index}>
-                  <ListItemIcon>
-                    <LocationOnIcon color="primary" />
-                  </ListItemIcon>
-                  <ListItemText primary={attraction} />
-                </ListItem>
-              ))}
-            </List>
-          </Box>
-        </Box>
-
-        {/* Reservation Details Sidebar */}
-        <Box sx={{ width: { xs: '100%', md: '380px' } }}>
-          <Paper
-            elevation={3}
-            sx={{
-              p: 3,
-              position: { md: 'sticky' },
-              top: { md: '24px' },
-              borderRadius: 2,
-            }}
-          >
-            <Typography variant="h5" gutterBottom>
-              Reservation Details
+            <Typography variant="h5" color="primary" gutterBottom>
+              ${yard.price} per hour
             </Typography>
 
             <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <Stack spacing={3} sx={{ mb: 3 }}>
-                <DateTimePicker
+              <Box sx={{ my: 3 }}>
+                <DatePicker
                   label="Check-in"
                   value={checkIn}
                   onChange={(newValue) => setCheckIn(newValue)}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      sx: { mb: 2 }
-                    }
-                  }}
+                  sx={{ width: '100%', mb: 2 }}
                 />
-                <DateTimePicker
+                <DatePicker
                   label="Check-out"
                   value={checkOut}
                   onChange={(newValue) => setCheckOut(newValue)}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true
-                    }
-                  }}
+                  sx={{ width: '100%', mb: 2 }}
                 />
-              </Stack>
+                <TextField
+                  label="Number of Guests"
+                  type="number"
+                  value={guests}
+                  onChange={(e) => setGuests(Number(e.target.value))}
+                  fullWidth
+                  sx={{ mb: 2 }}
+                />
+              </Box>
             </LocalizationProvider>
 
-            <Divider sx={{ my: 3 }} />
-
-            {/* Pricing Details */}
-            <TableContainer>
-              <Table>
-                <TableBody>
-                  <TableRow>
-                    <TableCell sx={{ border: 'none', pl: 0, pt: 0 }}>
-                      <Typography variant="body1">
-                        Base Rate
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        ${yard.price} × {totalHours} hours
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right" sx={{ border: 'none', pr: 0, pt: 0 }}>
-                      ${baseRate}
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell sx={{ border: 'none', pl: 0 }}>
-                      <Typography variant="body1">
-                        Service Fee
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        10% of base rate
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right" sx={{ border: 'none', pr: 0 }}>
-                      ${serviceFee}
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell sx={{ border: 'none', pl: 0, pt: 3 }}>
-                      <Typography variant="h6">
-                        Total Cost
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right" sx={{ border: 'none', pr: 0, pt: 3 }}>
-                      <Typography variant="h6">
-                        ${totalCost}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
+            {bookingError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {bookingError}
+              </Alert>
+            )}
 
             <Button
               variant="contained"
               fullWidth
-              disabled={!isBookingComplete}
+              size="large"
+              onClick={handleReserve}
               sx={{
-                mt: 3,
-                py: 1.5,
-                bgcolor: isBookingComplete ? '#DAA520' : 'rgba(218, 165, 32, 0.5)',
+                bgcolor: '#3A7D44',
                 '&:hover': {
-                  bgcolor: isBookingComplete ? '#B8860B' : 'rgba(218, 165, 32, 0.5)',
+                  bgcolor: '#2D5F35',
                 },
-                '&.Mui-disabled': {
-                  bgcolor: 'rgba(218, 165, 32, 0.5)',
-                  color: 'white',
-                }
               }}
             >
               Reserve Now
             </Button>
           </Paper>
-        </Box>
-      </Box>
+        </Grid>
+      </Grid>
     </Container>
   );
 } 

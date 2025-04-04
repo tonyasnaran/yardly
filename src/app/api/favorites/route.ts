@@ -7,22 +7,21 @@ import { authOptions } from '@/lib/auth';
 const userFavorites = new Map<string, number[]>();
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  
+  if (!session) {
+    return new NextResponse(
+      JSON.stringify({ error: 'Unauthorized' }),
+      { status: 401 }
+    );
+  }
+
   try {
-    const session = await getServerSession(authOptions);
+    const { yardId, action } = await request.json();
     
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const body = await request.json();
-    const { yardId, action } = body;
-
     if (!yardId || !action) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
+      return new NextResponse(
+        JSON.stringify({ error: 'Missing required fields' }),
         { status: 400 }
       );
     }
@@ -38,35 +37,51 @@ export async function POST(request: NextRequest) {
       userFavorites.set(userId, currentFavorites.filter(id => id !== yardId));
     }
 
-    return NextResponse.json({ success: true });
+    return new NextResponse(
+      JSON.stringify({ success: true }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
   } catch (error) {
-    console.error('Error handling favorite:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
+    console.error('Error updating favorites:', error);
+    return new NextResponse(
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500 }
     );
   }
 }
 
 export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+  const session = await getServerSession(authOptions);
+  
+  if (!session) {
+    return new NextResponse(
+      JSON.stringify({ error: 'Unauthorized' }),
+      { status: 401 }
+    );
+  }
 
+  try {
     const userId = session.user.id;
     const favorites = userFavorites.get(userId) || [];
 
-    return NextResponse.json({ favorites });
+    return new NextResponse(
+      JSON.stringify({ favorites }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
   } catch (error) {
     console.error('Error fetching favorites:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
+    return new NextResponse(
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500 }
     );
   }

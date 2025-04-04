@@ -57,21 +57,35 @@ export default function BookYardPage({ params }: { params: { id: string } }) {
 
       console.log('Sending request with body:', requestBody);
 
-      const response = await fetch('/api/create-checkout-session', {
+      // Get the base URL for the environment
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
+      const apiUrl = `${baseUrl}/api/create-checkout-session`;
+      console.log('Making request to:', apiUrl);
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
         cache: 'no-store',
+      }).catch(error => {
+        console.error('Fetch error:', error);
+        throw new Error('Network error when trying to create checkout session');
       });
+
+      if (!response) {
+        throw new Error('No response received from server');
+      }
 
       console.log('Received response:', response.status, response.statusText);
 
       let data;
       try {
-        data = await response.json();
-        console.log('Response data:', data);
+        const textResponse = await response.text();
+        console.log('Raw response:', textResponse);
+        data = JSON.parse(textResponse);
+        console.log('Parsed response data:', data);
       } catch (e) {
         console.error('Error parsing response:', e);
         throw new Error('Failed to parse server response');

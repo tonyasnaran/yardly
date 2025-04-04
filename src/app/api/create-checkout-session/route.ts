@@ -10,6 +10,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-03-31.basil',
 });
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
 // Mock data for development
 const yards = [
   {
@@ -55,13 +58,20 @@ export async function POST(request: Request) {
     // Parse request body
     let body;
     try {
-      body = await request.json();
+      const text = await request.text();
+      console.log('Raw request body:', text);
+      body = JSON.parse(text);
       console.log('Parsed request body:', body);
     } catch (e) {
       console.error('Error parsing request body:', e);
-      return NextResponse.json(
-        { error: 'Invalid request body' },
-        { status: 400 }
+      return new NextResponse(
+        JSON.stringify({ error: 'Invalid request body' }),
+        {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
     }
 
@@ -76,9 +86,14 @@ export async function POST(request: Request) {
         guests: !guests,
       };
       console.error('Missing required fields:', missingFields);
-      return NextResponse.json(
-        { error: 'Missing required fields', details: missingFields },
-        { status: 400 }
+      return new NextResponse(
+        JSON.stringify({ error: 'Missing required fields', details: missingFields }),
+        {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
     }
 
@@ -88,9 +103,14 @@ export async function POST(request: Request) {
 
     if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime())) {
       console.error('Invalid dates:', { checkIn, checkOut });
-      return NextResponse.json(
-        { error: 'Invalid dates provided' },
-        { status: 400 }
+      return new NextResponse(
+        JSON.stringify({ error: 'Invalid dates provided' }),
+        {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
     }
 
@@ -98,9 +118,14 @@ export async function POST(request: Request) {
     const yard = yards.find(y => y.id === parseInt(yardId));
     if (!yard) {
       console.error('Yard not found:', yardId);
-      return NextResponse.json(
-        { error: 'Yard not found' },
-        { status: 404 }
+      return new NextResponse(
+        JSON.stringify({ error: 'Yard not found' }),
+        {
+          status: 404,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
     }
 
@@ -109,9 +134,14 @@ export async function POST(request: Request) {
     
     if (hours <= 0) {
       console.error('Invalid booking duration:', hours);
-      return NextResponse.json(
-        { error: 'Check-out time must be after check-in time' },
-        { status: 400 }
+      return new NextResponse(
+        JSON.stringify({ error: 'Check-out time must be after check-in time' }),
+        {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
     }
 
@@ -168,17 +198,39 @@ export async function POST(request: Request) {
         status: 200,
         headers: {
           'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
         },
       }
     );
   } catch (error) {
     console.error('Error in API route:', error);
-    return NextResponse.json(
-      { 
+    return new NextResponse(
+      JSON.stringify({ 
         error: error instanceof Error ? error.message : 'Error creating checkout session',
         details: error instanceof Error ? error.stack : undefined
-      },
-      { status: 500 }
+      }),
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        },
+      }
     );
   }
+}
+
+export async function OPTIONS(request: Request) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
 } 

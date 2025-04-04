@@ -44,12 +44,30 @@ export default function SavedPage() {
       }
 
       try {
-        const response = await fetch('/api/favorites');
-        if (!response.ok) {
+        // First, get the list of favorite yard IDs
+        const favoritesResponse = await fetch('/api/favorites');
+        if (!favoritesResponse.ok) {
           throw new Error('Failed to fetch favorites');
         }
-        const data = await response.json();
-        setFavoriteYards(data.favorites || []);
+        const { favorites: favoriteIds } = await favoritesResponse.json();
+
+        if (!favoriteIds || favoriteIds.length === 0) {
+          setFavoriteYards([]);
+          setLoading(false);
+          return;
+        }
+
+        // Then, fetch the details for each favorited yard
+        const yardPromises = favoriteIds.map(async (id: number) => {
+          const response = await fetch(`/api/yards/${id}`);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch yard ${id}`);
+          }
+          return response.json();
+        });
+
+        const yards = await Promise.all(yardPromises);
+        setFavoriteYards(yards);
       } catch (error) {
         console.error('Error fetching favorites:', error);
         setError('Failed to load saved yards');

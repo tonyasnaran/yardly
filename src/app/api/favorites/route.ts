@@ -97,13 +97,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // In a real application, you would fetch the user's favorites from a database
-    // For now, we'll return a mock list of favorite yard IDs
-    const favoriteIds = [1, 2]; // Mock favorite yard IDs
-    const favoriteYards = yards.filter(yard => favoriteIds.includes(yard.id));
+    const userId = session.user.id;
+    const favorites = userFavorites.get(userId) || [];
 
     return new NextResponse(
-      JSON.stringify({ favorites: favoriteYards }),
+      JSON.stringify({ favorites }),
       {
         status: 200,
         headers: {

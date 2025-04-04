@@ -146,15 +146,15 @@ export default function SavedPage() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 4 }}>
+      <Stack spacing={2} sx={{ mb: 4 }}>
         <Button
           startIcon={<ArrowBackIcon />}
           onClick={() => router.push('/')}
-          sx={{ textTransform: 'none' }}
+          sx={{ textTransform: 'none', alignSelf: 'flex-start' }}
         >
           Go back to Home
         </Button>
-        <Typography variant="h4" component="h1" sx={{ flex: 1 }}>
+        <Typography variant="h4" component="h1">
           Your Saved Yards
         </Typography>
       </Stack>
@@ -176,15 +176,18 @@ export default function SavedPage() {
               onClick={() => router.push(`/yards/${yard.id}`)}
             >
               <Box sx={{ position: 'relative', pt: '56.25%' }}>
-                <Image
-                  src={yard.image}
+                <CardMedia
+                  component="img"
+                  image={yard.image}
                   alt={yard.title}
-                  fill
-                  style={{
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
                     objectFit: 'cover',
                   }}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  priority
                 />
               </Box>
               <CardContent sx={{ flexGrow: 1 }}>

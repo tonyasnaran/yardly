@@ -25,9 +25,13 @@ import {
   Stack,
   Divider,
   OutlinedInput,
+  IconButton,
 } from '@mui/material';
 import LocationOn from '@mui/icons-material/LocationOn';
+import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
+import Favorite from '@mui/icons-material/Favorite';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 interface Yard {
   id: number;
@@ -57,6 +61,8 @@ const GUEST_OPTIONS = [
 ];
 
 export default function Home() {
+  const { data: session } = useSession();
+  const [favorites, setFavorites] = useState<number[]>([]);
   const [city, setCity] = useState('');
   const [selectedGuests, setSelectedGuests] = useState<string[]>([]);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
@@ -212,6 +218,35 @@ export default function Home() {
   // Remove the client-side filtering since we're now using the API
   const filteredYards = yards;
 
+  const toggleFavorite = async (yardId: number) => {
+    if (!session) {
+      router.push('/auth/signin');
+      return;
+    }
+
+    try {
+      const isFavorited = favorites.includes(yardId);
+      const newFavorites = isFavorited
+        ? favorites.filter(id => id !== yardId)
+        : [...favorites, yardId];
+      
+      setFavorites(newFavorites);
+      
+      // Save to API
+      await fetch('/api/favorites', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ yardId, action: isFavorited ? 'remove' : 'add' }),
+      });
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      // Revert the change if the API call fails
+      setFavorites(favorites);
+    }
+  };
+
   return (
     <Box>
       <Container maxWidth="lg" sx={{ mt: 4 }}>
@@ -336,6 +371,7 @@ export default function Home() {
                   height: '100%', 
                   display: 'flex', 
                   flexDirection: 'column',
+                  position: 'relative',
                   '&:hover': {
                     transform: 'translateY(-4px)',
                     transition: 'transform 0.2s ease-in-out',
@@ -343,6 +379,29 @@ export default function Home() {
                   }
                 }}
               >
+                <IconButton
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(yard.id);
+                  }}
+                  sx={{
+                    position: 'absolute',
+                    bottom: 8,
+                    left: 8,
+                    zIndex: 2,
+                    bgcolor: 'white',
+                    '&:hover': {
+                      bgcolor: 'rgba(255, 255, 255, 0.9)',
+                    },
+                  }}
+                >
+                  {favorites.includes(yard.id) ? (
+                    <Favorite sx={{ color: '#3A7D44' }} />
+                  ) : (
+                    <FavoriteBorder sx={{ color: '#3A7D44' }} />
+                  )}
+                </IconButton>
+                
                 <CardActionArea 
                   onClick={() => router.push(`/yards/${yard.id}`)}
                   sx={{ flexGrow: 1 }}

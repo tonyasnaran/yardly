@@ -18,7 +18,7 @@ const yards = [
     id: 3,
     title: "Los Angeles Downtown Rooftop",
     price: 65,
-    image: "/images/yards/Los Angeles Downtown Rooftop.jpg",
+    image: "/images/yards/Los Angeles Downtown Rooftop.png",
   },
   {
     id: 4,
@@ -50,36 +50,18 @@ export async function GET(
     const yard = yards.find(y => y.id === parseInt(params.id));
     
     if (!yard) {
-      return new NextResponse(
-        JSON.stringify({ error: 'Yard not found' }),
-        {
-          status: 404,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
+      return NextResponse.json(
+        { error: 'Yard not found' },
+        { status: 404 }
       );
     }
 
-    return new NextResponse(
-      JSON.stringify(yard),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    return NextResponse.json(yard);
   } catch (error) {
-    console.error('Error in yards API route:', error);
-    return new NextResponse(
-      JSON.stringify({ error: 'Internal server error' }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
+    console.error('Error fetching yard:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
     );
   }
 } 

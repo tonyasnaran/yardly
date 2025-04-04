@@ -23,8 +23,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Implement actual database operations
     // For now, we'll just return a success response
+    // In a real implementation, you would:
+    // 1. Store favorites in a database
+    // 2. Add/remove the yard from the user's favorites
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error handling favorite:', error);
@@ -46,10 +48,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // TODO: Implement actual database query
-    // For now, return mock data
+    // Return empty array instead of mock data
     return NextResponse.json({
-      favorites: [1, 2, 3] // Mock favorite yard IDs
+      favorites: []
     });
   } catch (error) {
     console.error('Error fetching favorites:', error);

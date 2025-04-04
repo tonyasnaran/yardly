@@ -61,8 +61,9 @@ const GUEST_OPTIONS = [
 ];
 
 export default function Home() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [favorites, setFavorites] = useState<number[]>([]);
+  const [isLoadingFavorites, setIsLoadingFavorites] = useState(true);
   const [city, setCity] = useState('');
   const [selectedGuests, setSelectedGuests] = useState<string[]>([]);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
@@ -218,32 +219,55 @@ export default function Home() {
   // Remove the client-side filtering since we're now using the API
   const filteredYards = yards;
 
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      if (status === 'authenticated') {
+        try {
+          const response = await fetch('/api/favorites');
+          if (response.ok) {
+            const data = await response.json();
+            setFavorites(data.favorites || []);
+          }
+        } catch (error) {
+          console.error('Error fetching favorites:', error);
+        } finally {
+          setIsLoadingFavorites(false);
+        }
+      } else {
+        setIsLoadingFavorites(false);
+      }
+    };
+
+    fetchFavorites();
+  }, [status]);
+
   const toggleFavorite = async (yardId: number) => {
-    if (!session) {
+    if (status !== 'authenticated') {
       router.push('/auth/signin');
       return;
     }
 
     try {
-      const isFavorited = favorites.includes(yardId);
-      const newFavorites = isFavorited
-        ? favorites.filter(id => id !== yardId)
-        : [...favorites, yardId];
+      const isCurrentlyFavorite = favorites.includes(yardId);
+      const action = isCurrentlyFavorite ? 'remove' : 'add';
       
-      setFavorites(newFavorites);
-      
-      // Save to API
-      await fetch('/api/favorites', {
+      const response = await fetch('/api/favorites', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ yardId, action: isFavorited ? 'remove' : 'add' }),
+        body: JSON.stringify({ yardId, action }),
       });
+
+      if (response.ok) {
+        setFavorites(prev => 
+          isCurrentlyFavorite 
+            ? prev.filter(id => id !== yardId)
+            : [...prev, yardId]
+        );
+      }
     } catch (error) {
       console.error('Error toggling favorite:', error);
-      // Revert the change if the API call fails
-      setFavorites(favorites);
     }
   };
 

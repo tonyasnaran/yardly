@@ -273,36 +273,31 @@ export default function Home() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <AppBar position="static" sx={{ bgcolor: '#3A7D44' }}>
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Yardly
-          </Typography>
-          <Button color="inherit" onClick={() => router.push('/auth/signin')}>
-            Sign In
-          </Button>
-        </Toolbar>
-      </AppBar>
-
       {/* Hero Section */}
       <Box
         sx={{
           bgcolor: '#3A7D44',
           color: 'white',
-          py: { xs: 8, md: 12 },
+          py: { xs: 12, md: 16 },
           px: { xs: 2, md: 4 },
           textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '60vh',
         }}
       >
         <Container maxWidth="md">
           <Typography
-            variant="h2"
-            component="h1"
+            variant="h1"
             sx={{
-              fontWeight: 'bold',
-              mb: 4,
-              fontSize: { xs: '2.5rem', md: '3.5rem' },
-              lineHeight: 1.2,
+              fontWeight: 900,
+              mb: 6,
+              fontSize: { xs: '3rem', sm: '4rem', md: '5rem' },
+              lineHeight: 1.1,
+              letterSpacing: '-0.02em',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
             }}
           >
             Your party, their yard
@@ -317,10 +312,12 @@ export default function Home() {
               '&:hover': {
                 bgcolor: 'rgba(255, 255, 255, 0.9)',
               },
-              px: 4,
-              py: 1.5,
-              fontSize: '1.1rem',
+              px: 6,
+              py: 2,
+              fontSize: '1.2rem',
               fontWeight: 'bold',
+              borderRadius: '50px',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
             }}
           >
             Discover How It Works

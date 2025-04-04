@@ -14,8 +14,10 @@ import {
   Grid,
   CircularProgress,
   Alert,
+  Stack,
 } from '@mui/material';
 import Image from 'next/image';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 interface Yard {
   id: number;
@@ -144,9 +146,18 @@ export default function SavedPage() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4 }}>
-        Your Saved Yards
-      </Typography>
+      <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 4 }}>
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={() => router.push('/')}
+          sx={{ textTransform: 'none' }}
+        >
+          Go back to Home
+        </Button>
+        <Typography variant="h4" component="h1" sx={{ flex: 1 }}>
+          Your Saved Yards
+        </Typography>
+      </Stack>
       <Grid container spacing={4}>
         {favoriteYards.map((yard) => (
           <Grid item key={yard.id} xs={12} sm={6} md={4}>
@@ -165,18 +176,15 @@ export default function SavedPage() {
               onClick={() => router.push(`/yards/${yard.id}`)}
             >
               <Box sx={{ position: 'relative', pt: '56.25%' }}>
-                <CardMedia
-                  component="img"
-                  image={yard.image}
+                <Image
+                  src={yard.image}
                   alt={yard.title}
-                  sx={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
+                  fill
+                  style={{
                     objectFit: 'cover',
                   }}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  priority
                 />
               </Box>
               <CardContent sx={{ flexGrow: 1 }}>

@@ -228,17 +228,18 @@ export default function Home() {
   // Remove the client-side filtering since we're now using the API
   const filteredYards = yards;
 
+  // Load favorites when user is authenticated
   useEffect(() => {
-    const fetchFavorites = async () => {
+    const loadFavorites = async () => {
       if (status === 'authenticated') {
         try {
           const response = await fetch('/api/favorites');
           if (response.ok) {
             const data = await response.json();
-            setFavorites(data.favorites || []);
+            setFavorites(data.yards.map((yard: Yard) => yard.id));
           }
         } catch (error) {
-          console.error('Error fetching favorites:', error);
+          console.error('Error loading favorites:', error);
         } finally {
           setIsLoadingFavorites(false);
         }
@@ -247,7 +248,7 @@ export default function Home() {
       }
     };
 
-    fetchFavorites();
+    loadFavorites();
   }, [status]);
 
   const toggleFavorite = async (yardId: number) => {
@@ -257,23 +258,17 @@ export default function Home() {
     }
 
     try {
-      const isCurrentlyFavorite = favorites.includes(yardId);
-      const action = isCurrentlyFavorite ? 'remove' : 'add';
-      
       const response = await fetch('/api/favorites', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ yardId, action }),
+        body: JSON.stringify({ yardId }),
       });
 
       if (response.ok) {
-        setFavorites(prev => 
-          isCurrentlyFavorite 
-            ? prev.filter(id => id !== yardId)
-            : [...prev, yardId]
-        );
+        const data = await response.json();
+        setFavorites(data.favorites);
       }
     } catch (error) {
       console.error('Error toggling favorite:', error);
@@ -510,10 +505,9 @@ export default function Home() {
                     }}
                     sx={{
                       position: 'absolute',
-                      bottom: 8,
-                      left: 8,
-                      zIndex: 2,
-                      bgcolor: 'white',
+                      top: 8,
+                      right: 8,
+                      bgcolor: 'rgba(255, 255, 255, 0.8)',
                       '&:hover': {
                         bgcolor: 'rgba(255, 255, 255, 0.9)',
                       },

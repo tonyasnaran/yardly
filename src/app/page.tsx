@@ -278,31 +278,41 @@ export default function Home() {
         sx={{
           bgcolor: '#3A7D44',
           color: 'white',
-          py: { xs: 12, md: 16 },
+          py: { xs: 8, md: 12 },
           px: { xs: 2, md: 4 },
           textAlign: 'center',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: '60vh',
+          minHeight: { xs: '50vh', md: '60vh' },
+          position: 'relative',
         }}
       >
-        <Container maxWidth="md">
+        <Container 
+          maxWidth="md"
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 4,
+          }}
+        >
           <Typography
             variant="h1"
             sx={{
               fontWeight: 900,
-              mb: 6,
               fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
-              lineHeight: 1,
+              lineHeight: 1.2,
               letterSpacing: '-0.02em',
               textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
               whiteSpace: 'nowrap',
               color: 'white',
               maxWidth: '100%',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
+              overflow: 'visible',
+              textOverflow: 'clip',
+              mb: 2,
             }}
           >
             Your party, their yard

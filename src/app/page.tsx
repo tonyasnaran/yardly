@@ -498,89 +498,91 @@ export default function Home() {
                     }
                   }}
                 >
-                  <IconButton
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFavorite(yard.id);
-                    }}
-                    sx={{
-                      position: 'absolute',
-                      top: 8,
-                      right: 8,
-                      bgcolor: 'rgba(255, 255, 255, 0.8)',
-                      '&:hover': {
-                        bgcolor: 'rgba(255, 255, 255, 0.9)',
-                      },
-                    }}
-                  >
-                    {favorites.includes(yard.id) ? (
-                      <Favorite sx={{ color: '#3A7D44' }} />
-                    ) : (
-                      <FavoriteBorder sx={{ color: '#3A7D44' }} />
-                    )}
-                  </IconButton>
-                  
-                  <CardActionArea 
-                    onClick={() => handleYardClick(yard.id)}
-                    sx={{ flexGrow: 1 }}
-                  >
-                    <CardMedia
-                      component="img"
-                      height="200"
-                      image={yard.image}
-                      alt={yard.title}
-                    />
-                    <CardContent sx={{ flexGrow: 1 }}>
-                      <Typography gutterBottom variant="h6" component="h2">
-                        {yard.title}
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                        <Chip 
-                          label={`Up to ${yard.guests} guests`}
-                          size="small"
-                          sx={{ bgcolor: '#FFD166', color: '#3A7D44' }}
-                        />
-                        {yard.amenities.slice(0, 3).map((amenity) => (
-                          <Chip
-                            key={amenity}
-                            label={AMENITY_OPTIONS.find(opt => opt.value === amenity)?.label || amenity}
-                            size="small"
-                            sx={{ bgcolor: 'rgba(58, 125, 68, 0.1)', color: '#3A7D44' }}
-                          />
-                        ))}
-                        {yard.amenities.length > 3 && (
-                          <Chip
-                            label={`+${yard.amenities.length - 3} more`}
-                            size="small"
-                            sx={{ bgcolor: 'rgba(58, 125, 68, 0.1)', color: '#3A7D44' }}
-                          />
-                        )}
-                      </Box>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        {yard.city}
-                      </Typography>
-                      <Typography variant="h6" color="primary">
-                        ${yard.price}/hour
-                      </Typography>
-                    </CardContent>
-                  </CardActionArea>
-                  <Box sx={{ p: 2, pt: 0 }}>
-                    <Button
-                      variant="contained"
-                      fullWidth
+                  <Box sx={{ position: 'relative' }}>
+                    <IconButton
                       onClick={(e) => {
                         e.stopPropagation();
-                        router.push(`/yards/${yard.id}/book`);
+                        toggleFavorite(yard.id);
                       }}
                       sx={{
-                        bgcolor: '#3A7D44',
+                        position: 'absolute',
+                        top: 8,
+                        left: 8,
+                        bgcolor: 'rgba(255, 255, 255, 0.8)',
                         '&:hover': {
-                          bgcolor: '#2D5F35',
+                          bgcolor: 'rgba(255, 255, 255, 0.9)',
                         },
+                        zIndex: 3,
                       }}
                     >
-                      Book Now
-                    </Button>
+                      {favorites.includes(yard.id) ? (
+                        <Favorite sx={{ color: '#3A7D44' }} />
+                      ) : (
+                        <FavoriteBorder sx={{ color: '#3A7D44' }} />
+                      )}
+                    </IconButton>
+                    <CardActionArea 
+                      onClick={() => handleYardClick(yard.id)}
+                      sx={{ flexGrow: 1 }}
+                    >
+                      <CardMedia
+                        component="img"
+                        height="200"
+                        image={yard.image}
+                        alt={yard.title}
+                      />
+                      <CardContent sx={{ flexGrow: 1 }}>
+                        <Typography gutterBottom variant="h6" component="h2">
+                          {yard.title}
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                          <Chip 
+                            label={`Up to ${yard.guests} guests`}
+                            size="small"
+                            sx={{ bgcolor: '#FFD166', color: '#3A7D44' }}
+                          />
+                          {yard.amenities.slice(0, 3).map((amenity) => (
+                            <Chip
+                              key={amenity}
+                              label={AMENITY_OPTIONS.find(opt => opt.value === amenity)?.label || amenity}
+                              size="small"
+                              sx={{ bgcolor: 'rgba(58, 125, 68, 0.1)', color: '#3A7D44' }}
+                            />
+                          ))}
+                          {yard.amenities.length > 3 && (
+                            <Chip
+                              label={`+${yard.amenities.length - 3} more`}
+                              size="small"
+                              sx={{ bgcolor: 'rgba(58, 125, 68, 0.1)', color: '#3A7D44' }}
+                            />
+                          )}
+                        </Box>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          {yard.city}
+                        </Typography>
+                        <Typography variant="h6" color="primary">
+                          ${yard.price}/hour
+                        </Typography>
+                      </CardContent>
+                    </CardActionArea>
+                    <Box sx={{ p: 2, pt: 0 }}>
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/yards/${yard.id}/book`);
+                        }}
+                        sx={{
+                          bgcolor: '#3A7D44',
+                          '&:hover': {
+                            bgcolor: '#2D5F35',
+                          },
+                        }}
+                      >
+                        Book Now
+                      </Button>
+                    </Box>
                   </Box>
                 </Card>
               </Grid>

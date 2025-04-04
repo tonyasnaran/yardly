@@ -559,37 +559,39 @@ export default function Home() {
                         image={yard.image}
                         alt={yard.title}
                       />
-                      <CardContent sx={{ flexGrow: 1 }}>
-                        <Typography gutterBottom variant="h6" component="h2">
-                          {yard.title}
-                        </Typography>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                          <Chip 
-                            label={`Up to ${yard.guests} guests`}
-                            size="small"
-                            sx={{ bgcolor: '#FFD166', color: '#3A7D44' }}
-                          />
-                          {yard.amenities.slice(0, 3).map((amenity) => (
-                            <Chip
-                              key={amenity}
-                              label={AMENITY_OPTIONS.find(opt => opt.value === amenity)?.label || amenity}
+                      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                        <Box sx={{ mb: 'auto' }}>
+                          <Typography gutterBottom variant="h6" component="h2">
+                            {yard.title}
+                          </Typography>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                            <Chip 
+                              label={`Up to ${yard.guests} guests`}
                               size="small"
-                              sx={{ bgcolor: 'rgba(58, 125, 68, 0.1)', color: '#3A7D44' }}
+                              sx={{ bgcolor: '#FFD166', color: '#3A7D44' }}
                             />
-                          ))}
-                          {yard.amenities.length > 3 && (
-                            <Chip
-                              label={`+${yard.amenities.length - 3} more`}
-                              size="small"
-                              sx={{ bgcolor: 'rgba(58, 125, 68, 0.1)', color: '#3A7D44' }}
-                            />
-                          )}
+                            {yard.amenities.slice(0, 3).map((amenity) => (
+                              <Chip
+                                key={amenity}
+                                label={AMENITY_OPTIONS.find(opt => opt.value === amenity)?.label || amenity}
+                                size="small"
+                                sx={{ bgcolor: 'rgba(58, 125, 68, 0.1)', color: '#3A7D44' }}
+                              />
+                            ))}
+                            {yard.amenities.length > 3 && (
+                              <Chip
+                                label={`+${yard.amenities.length - 3} more`}
+                                size="small"
+                                sx={{ bgcolor: 'rgba(58, 125, 68, 0.1)', color: '#3A7D44' }}
+                              />
+                            )}
+                          </Box>
                         </Box>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                          <Typography variant="body2" color="text.secondary">
+                        <Box sx={{ mt: 'auto' }}>
+                          <Typography variant="body2" color="text.secondary" gutterBottom>
                             {yard.city}
                           </Typography>
-                          <Typography variant="h6" color="primary">
+                          <Typography variant="h6" color="primary" gutterBottom>
                             ${yard.price}/hour
                           </Typography>
                         </Box>

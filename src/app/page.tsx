@@ -228,12 +228,19 @@ export default function Home() {
   // Remove the client-side filtering since we're now using the API
   const filteredYards = yards;
 
-  // Load favorites when user is authenticated
+  // Load favorites when user is authenticated or when page loads
   useEffect(() => {
     const loadFavorites = async () => {
       if (status === 'authenticated') {
         try {
-          const response = await fetch('/api/favorites');
+          const response = await fetch('/api/favorites', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            cache: 'no-store', // Prevent caching to ensure fresh data
+          });
+          
           if (response.ok) {
             const data = await response.json();
             setFavorites(data.yards.map((yard: Yard) => yard.id));
@@ -249,7 +256,7 @@ export default function Home() {
     };
 
     loadFavorites();
-  }, [status]);
+  }, [status]); // Re-run when auth status changes
 
   const toggleFavorite = async (yardId: number) => {
     if (status !== 'authenticated') {
@@ -298,6 +305,27 @@ export default function Home() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {/* AppBar */}
+      <AppBar position="static" sx={{ bgcolor: '#3A7D44' }}>
+        <Toolbar>
+          <Typography
+            variant="h6"
+            component="div"
+            sx={{ 
+              flexGrow: 1,
+              cursor: 'pointer',
+              '&:hover': {
+                opacity: 0.8,
+              },
+            }}
+            onClick={() => router.push('/')}
+          >
+            Yardly
+          </Typography>
+          {/* ... rest of the AppBar content ... */}
+        </Toolbar>
+      </AppBar>
+
       {/* Hero Section */}
       <Box
         sx={{

@@ -17,8 +17,15 @@ const yards = [
   {
     id: 3,
     title: "Los Angeles Downtown Rooftop",
+    city: "Downtown",
     price: 65,
-    image: "/images/yards/Los Angeles Downtown Rooftop.jpg",
+    guests: 20,
+    image: "/images/yards/Los Angeles Downtown Rooftop.png",
+    amenities: ["outdoor_kitchen", "firepit", "playground"],
+    description: "A modern rooftop space with panoramic views of the LA skyline. Features a fully equipped outdoor kitchen, cozy fire pit, and a small playground area for kids. Perfect for corporate events and family gatherings with stunning city views.",
+    rating: 4.7,
+    reviews: 18,
+    nearbyAttractions: ["Staples Center", "Grand Park", "The Broad Museum"]
   },
   {
     id: 4,
@@ -50,36 +57,18 @@ export async function GET(
     const yard = yards.find(y => y.id === parseInt(params.id));
     
     if (!yard) {
-      return new NextResponse(
-        JSON.stringify({ error: 'Yard not found' }),
-        {
-          status: 404,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
+      return NextResponse.json(
+        { error: 'Yard not found' },
+        { status: 404 }
       );
     }
 
-    return new NextResponse(
-      JSON.stringify(yard),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    return NextResponse.json(yard);
   } catch (error) {
-    console.error('Error in yards API route:', error);
-    return new NextResponse(
-      JSON.stringify({ error: 'Internal server error' }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
+    console.error('Error fetching yard:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
     );
   }
 } 

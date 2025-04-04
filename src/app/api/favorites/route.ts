@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
+// In-memory storage for favorites
+// In a real application, this would be a database
+const userFavorites = new Map<string, number[]>();
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -23,10 +27,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // For now, we'll just return a success response
-    // In a real implementation, you would:
-    // 1. Store favorites in a database
-    // 2. Add/remove the yard from the user's favorites
+    const userId = session.user.id;
+    const currentFavorites = userFavorites.get(userId) || [];
+
+    if (action === 'add') {
+      if (!currentFavorites.includes(yardId)) {
+        userFavorites.set(userId, [...currentFavorites, yardId]);
+      }
+    } else if (action === 'remove') {
+      userFavorites.set(userId, currentFavorites.filter(id => id !== yardId));
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error handling favorite:', error);
@@ -48,10 +59,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Return empty array instead of mock data
-    return NextResponse.json({
-      favorites: []
-    });
+    const userId = session.user.id;
+    const favorites = userFavorites.get(userId) || [];
+
+    return NextResponse.json({ favorites });
   } catch (error) {
     console.error('Error fetching favorites:', error);
     return NextResponse.json(

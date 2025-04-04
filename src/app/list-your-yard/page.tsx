@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Container,
   Typography,
@@ -19,12 +20,11 @@ import {
   FormHelperText,
   Alert,
 } from '@mui/material';
-import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
 const steps = ['Personal Information', 'Yard Details', 'Pricing & Availability'];
 
-export default function ListYourYard() {
+export default function ListYourYardPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const [activeStep, setActiveStep] = useState(0);
@@ -108,15 +108,25 @@ export default function ListYourYard() {
   };
 
   const handleSubmit = async () => {
-    setSubmitStatus('loading');
     try {
-      // TODO: Implement actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      setSubmitStatus('success');
-      // Redirect to success page or show success message
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Show success message
+      setFormData(prev => ({
+        ...prev,
+        success: 'Your yard has been submitted successfully! We will review it shortly.'
+      }));
+      
+      // Redirect to home page after 3 seconds
+      setTimeout(() => {
+        router.push('/');
+      }, 3000);
     } catch (error) {
-      console.error('Error submitting form:', error);
-      setSubmitStatus('error');
+      setFormData(prev => ({
+        ...prev,
+        error: 'Failed to submit your yard. Please try again.'
+      }));
     }
   };
 
@@ -303,11 +313,11 @@ export default function ListYourYard() {
 
         {submitStatus === 'success' ? (
           <Alert severity="success" sx={{ mb: 3 }}>
-            Your yard has been submitted for review! We'll contact you soon.
+            {formData.success}
           </Alert>
         ) : submitStatus === 'error' ? (
           <Alert severity="error" sx={{ mb: 3 }}>
-            There was an error submitting your yard. Please try again.
+            {formData.error}
           </Alert>
         ) : (
           <>

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
 if (!process.env.STRIPE_SECRET_KEY) {
+  console.error('STRIPE_SECRET_KEY is not defined');
   throw new Error('STRIPE_SECRET_KEY is not defined');
 }
 
@@ -44,20 +45,39 @@ const yards = [
 ];
 
 export async function POST(request: Request) {
+  console.log('API route called');
   try {
-    // Log the raw request for debugging
-    console.log('Incoming request URL:', request.url);
+    // Log request details
+    console.log('Request method:', request.method);
+    console.log('Request headers:', Object.fromEntries(request.headers.entries()));
+    console.log('Request URL:', request.url);
     
-    const body = await request.json();
-    console.log('Request body:', body);
+    // Parse request body
+    let body;
+    try {
+      body = await request.json();
+      console.log('Parsed request body:', body);
+    } catch (e) {
+      console.error('Error parsing request body:', e);
+      return NextResponse.json(
+        { error: 'Invalid request body' },
+        { status: 400 }
+      );
+    }
 
     const { yardId, checkIn, checkOut, guests } = body;
 
     // Validate required fields
     if (!yardId || !checkIn || !checkOut || !guests) {
-      console.error('Missing required fields:', { yardId, checkIn, checkOut, guests });
+      const missingFields = {
+        yardId: !yardId,
+        checkIn: !checkIn,
+        checkOut: !checkOut,
+        guests: !guests,
+      };
+      console.error('Missing required fields:', missingFields);
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields', details: missingFields },
         { status: 400 }
       );
     }
@@ -107,11 +127,8 @@ export async function POST(request: Request) {
       total
     });
 
-    // Get the base URL for the environment
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.goyardly.com';
-    console.log('Using base URL:', baseUrl);
-
     // Create Stripe checkout session
+    console.log('Creating Stripe session...');
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -128,8 +145,8 @@ export async function POST(request: Request) {
         },
       ],
       mode: 'payment',
-      success_url: `${baseUrl}/checkout/${'{CHECKOUT_SESSION_ID}'}`,
-      cancel_url: `${baseUrl}/yards/${yardId}/book`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.goyardly.com'}/checkout/${'{CHECKOUT_SESSION_ID}'}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.goyardly.com'}/yards/${yardId}/book`,
       metadata: {
         yardId: yardId.toString(),
         checkIn: checkIn,
@@ -138,17 +155,29 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log('Checkout session created:', {
+    console.log('Stripe session created:', {
       sessionId: session.id,
       successUrl: session.success_url,
       cancelUrl: session.cancel_url
     });
 
-    return NextResponse.json({ sessionId: session.id });
+    // Return success response
+    return new NextResponse(
+      JSON.stringify({ sessionId: session.id }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
   } catch (error) {
-    console.error('Error creating checkout session:', error);
+    console.error('Error in API route:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Error creating checkout session' },
+      { 
+        error: error instanceof Error ? error.message : 'Error creating checkout session',
+        details: error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     );
   }

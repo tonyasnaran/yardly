@@ -38,6 +38,7 @@ export default function BookYardPage({ params }: { params: { id: string } }) {
   });
 
   const handleReserve = async () => {
+    console.log('Reserve button clicked');
     try {
       setLoading(true);
       setError(null);
@@ -47,33 +48,48 @@ export default function BookYardPage({ params }: { params: { id: string } }) {
         return;
       }
 
+      const requestBody = {
+        yardId: params.id,
+        checkIn: bookingDetails.checkIn.toISOString(),
+        checkOut: bookingDetails.checkOut.toISOString(),
+        guests: bookingDetails.guests,
+      };
+
+      console.log('Sending request with body:', requestBody);
+
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          yardId: params.id,
-          checkIn: bookingDetails.checkIn.toISOString(),
-          checkOut: bookingDetails.checkOut.toISOString(),
-          guests: bookingDetails.guests,
-        }),
+        body: JSON.stringify(requestBody),
+        cache: 'no-store',
       });
 
-      const data = await response.json();
+      console.log('Received response:', response.status, response.statusText);
+
+      let data;
+      try {
+        data = await response.json();
+        console.log('Response data:', data);
+      } catch (e) {
+        console.error('Error parsing response:', e);
+        throw new Error('Failed to parse server response');
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create checkout session');
+        throw new Error(data.error || `Server error: ${response.status}`);
       }
 
       if (!data.sessionId) {
         throw new Error('No session ID returned from the server');
       }
 
-      console.log('Redirecting to checkout with session ID:', data.sessionId);
-      router.push(`/checkout/${data.sessionId}`);
+      const checkoutUrl = `/checkout/${data.sessionId}`;
+      console.log('Redirecting to:', checkoutUrl);
+      router.push(checkoutUrl);
     } catch (error) {
-      console.error('Error creating checkout session:', error);
+      console.error('Error in handleReserve:', error);
       setError(error instanceof Error ? error.message : 'Failed to create checkout session');
     } finally {
       setLoading(false);
@@ -115,13 +131,19 @@ export default function BookYardPage({ params }: { params: { id: string } }) {
                 <DateTimePicker
                   label="Check-in"
                   value={bookingDetails.checkIn}
-                  onChange={(date) => setBookingDetails({ ...bookingDetails, checkIn: date })}
+                  onChange={(date) => {
+                    console.log('Check-in date changed:', date);
+                    setBookingDetails({ ...bookingDetails, checkIn: date });
+                  }}
                   sx={{ width: '100%', mb: 2 }}
                 />
                 <DateTimePicker
                   label="Check-out"
                   value={bookingDetails.checkOut}
-                  onChange={(date) => setBookingDetails({ ...bookingDetails, checkOut: date })}
+                  onChange={(date) => {
+                    console.log('Check-out date changed:', date);
+                    setBookingDetails({ ...bookingDetails, checkOut: date });
+                  }}
                   sx={{ width: '100%' }}
                 />
               </Box>
@@ -129,7 +151,11 @@ export default function BookYardPage({ params }: { params: { id: string } }) {
                 label="Number of Guests"
                 type="number"
                 value={bookingDetails.guests}
-                onChange={(e) => setBookingDetails({ ...bookingDetails, guests: parseInt(e.target.value) })}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value);
+                  console.log('Guests changed:', value);
+                  setBookingDetails({ ...bookingDetails, guests: value });
+                }}
                 fullWidth
                 sx={{ mb: 3 }}
                 inputProps={{ min: 1 }}
@@ -176,7 +202,14 @@ export default function BookYardPage({ params }: { params: { id: string } }) {
                 variant="contained"
                 fullWidth
                 size="large"
-                onClick={handleReserve}
+                onClick={() => {
+                  console.log('Button clicked, current state:', {
+                    loading,
+                    bookingDetails,
+                    params
+                  });
+                  handleReserve();
+                }}
                 disabled={loading || !bookingDetails.checkIn || !bookingDetails.checkOut}
                 sx={{
                   mt: 3,

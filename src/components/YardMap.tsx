@@ -12,7 +12,7 @@ const DEFAULT_CENTER = { lat: 34.0195, lng: -118.4912 }; // Santa Monica coordin
 
 // Sample coordinates for cities (you can adjust these)
 const CITY_COORDINATES: { [key: string]: { lat: number; lng: number } } = {
-  'Malibu': { lat: 34.0259, lng: -118.7012 }, // Updated to be closer to Pepperdine/main Malibu
+  'Malibu': { lat: 34.0369, lng: -118.7066 }, // Updated to Pepperdine University area
   'Santa Monica': { lat: 34.0195, lng: -118.4912 },
   'Mid City': { lat: 34.0511, lng: -118.3463 },
   'Beverly Hills': { lat: 34.0736, lng: -118.4004 },

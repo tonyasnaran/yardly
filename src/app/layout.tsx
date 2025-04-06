@@ -5,6 +5,7 @@ import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
 import ThemeRegistry from '@/components/ThemeRegistry';
 import ClientLayout from '@/components/ClientLayout';
 import { Providers } from './providers';
+import GoogleMapsScript from '@/components/GoogleMapsScript';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -25,6 +26,7 @@ export default function RootLayout({
           <AppRouterCacheProvider>
             <ThemeRegistry>
               <ClientLayout>
+                <GoogleMapsScript />
                 {children}
               </ClientLayout>
             </ThemeRegistry>

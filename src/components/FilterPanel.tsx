@@ -17,16 +17,12 @@ import {
 
 const AMENITY_OPTIONS = [
   'Pool',
-  'Hot Tub',
-  'Outdoor Kitchen',
-  'Fire Pit',
+  'Wi-Fi',
   'Grill',
-  'Playground',
+  'Covered Patio',
   'Restroom Access',
   'Speakers/Sound System',
   'Kid Friendly',
-  'Covered Patio',
-  'Wi-Fi'
 ];
 
 interface FilterPanelProps {

@@ -1,23 +1,23 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
 import {
+  Paper,
+  InputBase,
+  Divider,
   Box,
   Button,
-  Divider,
-  InputBase,
-  Menu,
-  MenuItem,
-  Paper,
-  Popper,
+  Popover,
+  List,
+  ListItem,
+  ListItemText,
   Typography,
+  CircularProgress,
 } from '@mui/material';
-import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import SearchIcon from '@mui/icons-material/Search';
-import format from 'date-fns/format';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { useRouter } from 'next/navigation';
+import DatePickerProvider from './DatePickerProvider';
 
 const GUEST_OPTIONS = [
   'Up to 10 Guests',
@@ -27,78 +27,204 @@ const GUEST_OPTIONS = [
   '25+ Guests',
 ];
 
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'gmp-place-autocomplete': React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement> & {
+          placeholder?: string;
+          onPlaceSelect?: (e: CustomEvent<google.maps.places.PlaceResult>) => void;
+        },
+        HTMLElement
+      >;
+    }
+  }
+}
+
 export default function SearchBar() {
   const router = useRouter();
   const [city, setCity] = useState('');
   const [checkIn, setCheckIn] = useState<Date | null>(null);
   const [checkOut, setCheckOut] = useState<Date | null>(null);
-  const [guestAnchorEl, setGuestAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedGuests, setSelectedGuests] = useState('');
+  const [guests, setGuests] = useState(GUEST_OPTIONS[0]);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const [placesLoaded, setPlacesLoaded] = useState(false);
+  const autocompleteRef = useRef<HTMLElement | null>(null);
 
-  const handleGuestClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    setGuestAnchorEl(event.currentTarget);
+  useEffect(() => {
+    const handleGoogleMapsReady = () => {
+      if (window.google?.maps?.places) {
+        setPlacesLoaded(true);
+      }
+    };
+
+    // Check if Google Maps is already loaded
+    if (window.google?.maps?.places) {
+      setPlacesLoaded(true);
+    }
+
+    // Listen for the custom event from GoogleMapsScript
+    window.addEventListener('google-maps-ready', handleGoogleMapsReady);
+
+    return () => {
+      window.removeEventListener('google-maps-ready', handleGoogleMapsReady);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (placesLoaded && autocompleteRef.current) {
+      const element = autocompleteRef.current;
+      
+      // Apply custom styles to remove the black bar
+      const style = document.createElement('style');
+      style.textContent = `
+        gmp-place-autocomplete {
+          width: 100%;
+          border: none !important;
+          outline: none !important;
+          font-family: inherit;
+          font-size: inherit;
+          background: transparent !important;
+        }
+        gmp-place-autocomplete input[aria-autocomplete="list"] {
+          width: 100% !important;
+          padding: 8px 0 !important;
+          border: none !important;
+          outline: none !important;
+          font-family: inherit !important;
+          font-size: inherit !important;
+          color: inherit !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          -webkit-appearance: none !important;
+        }
+        gmp-place-autocomplete input[aria-autocomplete="list"]:focus {
+          background: transparent !important;
+          border: none !important;
+          outline: none !important;
+          box-shadow: none !important;
+        }
+        gmp-place-autocomplete input[aria-autocomplete="list"]::placeholder {
+          color: #757575;
+          opacity: 1;
+        }
+        gmp-place-autocomplete div {
+          background: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+        }
+      `;
+      document.head.appendChild(style);
+
+      // Wait for the element to be fully initialized
+      const checkForInput = setInterval(() => {
+        const input = element.querySelector('input');
+        if (input) {
+          clearInterval(checkForInput);
+          // Add event listener for place selection
+          element.addEventListener('place_changed', (e: CustomEvent<google.maps.places.PlaceResult>) => {
+            const place = e.detail;
+            if (place?.formatted_address) {
+              setCity(place.formatted_address);
+            }
+          });
+        }
+      }, 100);
+
+      return () => {
+        clearInterval(checkForInput);
+        document.head.removeChild(style);
+      };
+    }
+  }, [placesLoaded]);
+
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
   };
 
-  const handleGuestClose = () => {
-    setGuestAnchorEl(null);
-  };
-
-  const handleGuestSelect = (option: string) => {
-    setSelectedGuests(option);
-    handleGuestClose();
+  const handleClose = () => {
+    setAnchorEl(null);
   };
 
   const handleSearch = () => {
-    // Extract the number from the guest option (e.g., "Up to 10 Guests" -> "10")
-    const guestLimit = selectedGuests.match(/\d+/)?.[0] || '5';
-    
-    router.push(`/yards/results?city=${encodeURIComponent(city)}&checkIn=${checkIn?.toISOString()}&checkOut=${checkOut?.toISOString()}&guests=${guestLimit}`);
+    const params = new URLSearchParams();
+    if (city) params.append('city', city);
+    if (checkIn) params.append('checkIn', checkIn.toISOString());
+    if (checkOut) params.append('checkOut', checkOut.toISOString());
+    if (guests) params.append('guests', guests.split(' ')[2]); // Extract number from "Up to X Guests"
+
+    router.push(`/yards/results?${params.toString()}`);
   };
+
+  const open = Boolean(anchorEl);
 
   return (
     <Paper
-      elevation={3}
+      component="form"
       sx={{
         display: 'flex',
-        alignItems: 'center',
+        flexDirection: { xs: 'column', md: 'row' },
+        alignItems: { xs: 'stretch', md: 'center' },
         width: '100%',
         maxWidth: 900,
-        borderRadius: '40px',
-        p: '8px',
+        borderRadius: { xs: '24px', md: '40px' },
+        p: { xs: '16px', md: '8px' },
         backgroundColor: 'white',
         border: '1px solid #ddd',
+        gap: { xs: 2, md: 0 },
       }}
+      elevation={3}
     >
-      {/* Location Search */}
       <Box
         sx={{
-          flex: 2,
+          flex: { md: 2 },
           display: 'flex',
           flexDirection: 'column',
           px: 2,
+          minWidth: { xs: '100%', md: '200px' },
         }}
       >
         <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#222' }}>
           Where
         </Typography>
-        <InputBase
-          placeholder="Search cities"
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          sx={{ color: '#222' }}
-        />
+        <div>
+          {!placesLoaded ? (
+            <InputBase
+              sx={{ 
+                flex: 1,
+                '& input': {
+                  py: 1,
+                  width: '100%',
+                }
+              }}
+              placeholder="Loading places..."
+              disabled
+              endAdornment={<CircularProgress size={20} />}
+            />
+          ) : (
+            <gmp-place-autocomplete
+              ref={autocompleteRef}
+              placeholder="Search cities"
+              style={{
+                width: '100%',
+                background: 'transparent',
+              }}
+            />
+          )}
+        </div>
       </Box>
 
-      <Divider orientation="vertical" flexItem />
+      <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', md: 'block' } }} />
+      <Divider sx={{ display: { xs: 'block', md: 'none' } }} />
 
-      {/* Check-in */}
-      <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <DatePickerProvider>
         <Box
           sx={{
-            flex: 1.5,
+            flex: { md: 1.5 },
             display: 'flex',
             flexDirection: 'column',
             px: 2,
+            width: { xs: '100%', md: 'auto' },
           }}
         >
           <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#222' }}>
@@ -113,20 +239,24 @@ export default function SearchBar() {
                 variant: 'standard',
                 InputProps: { disableUnderline: true },
                 placeholder: 'Add date & time',
+                sx: {
+                  width: '100%',
+                },
               },
             }}
           />
         </Box>
 
-        <Divider orientation="vertical" flexItem />
+        <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', md: 'block' } }} />
+        <Divider sx={{ display: { xs: 'block', md: 'none' } }} />
 
-        {/* Check-out */}
         <Box
           sx={{
-            flex: 1.5,
+            flex: { md: 1.5 },
             display: 'flex',
             flexDirection: 'column',
             px: 2,
+            width: { xs: '100%', md: 'auto' },
           }}
         >
           <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#222' }}>
@@ -141,76 +271,92 @@ export default function SearchBar() {
                 variant: 'standard',
                 InputProps: { disableUnderline: true },
                 placeholder: 'Add date & time',
+                sx: {
+                  width: '100%',
+                },
               },
             }}
           />
         </Box>
-      </LocalizationProvider>
+      </DatePickerProvider>
 
-      <Divider orientation="vertical" flexItem />
+      <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', md: 'block' } }} />
+      <Divider sx={{ display: { xs: 'block', md: 'none' } }} />
 
-      {/* Guest Limit */}
       <Box
-        onClick={handleGuestClick}
         sx={{
-          flex: 1.5,
+          flex: { md: 1.5 },
           display: 'flex',
           flexDirection: 'column',
           px: 2,
-          cursor: 'pointer',
+          width: { xs: '100%', md: 'auto' },
         }}
       >
         <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#222' }}>
           Guest Limit
         </Typography>
-        <Typography
-          color={selectedGuests ? 'text.primary' : 'text.secondary'}
-          sx={{ py: 1 }}
+        <Button
+          onClick={handleClick}
+          sx={{
+            textTransform: 'none',
+            color: 'text.primary',
+            justifyContent: 'flex-start',
+            pl: 0,
+            width: '100%',
+          }}
         >
-          {selectedGuests || 'Add guests'}
-        </Typography>
+          {guests}
+        </Button>
+        <Popover
+          open={open}
+          anchorEl={anchorEl}
+          onClose={handleClose}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'left',
+          }}
+          PaperProps={{
+            sx: {
+              mt: 1,
+              boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+              borderRadius: 2,
+            },
+          }}
+        >
+          <List sx={{ width: 200 }}>
+            {GUEST_OPTIONS.map((option) => (
+              <ListItem
+                button
+                key={option}
+                onClick={() => {
+                  setGuests(option);
+                  handleClose();
+                }}
+                sx={{
+                  py: 1.5,
+                  px: 3,
+                  '&:hover': { backgroundColor: '#f7f7f7' },
+                }}
+              >
+                <ListItemText primary={option} />
+              </ListItem>
+            ))}
+          </List>
+        </Popover>
       </Box>
 
-      <Menu
-        anchorEl={guestAnchorEl}
-        open={Boolean(guestAnchorEl)}
-        onClose={handleGuestClose}
-        PaperProps={{
-          sx: {
-            mt: 1,
-            boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-            borderRadius: 2,
-          },
-        }}
-      >
-        {GUEST_OPTIONS.map((option) => (
-          <MenuItem
-            key={option}
-            onClick={() => handleGuestSelect(option)}
-            sx={{
-              py: 1.5,
-              px: 3,
-              '&:hover': { backgroundColor: '#f7f7f7' },
-            }}
-          >
-            {option}
-          </MenuItem>
-        ))}
-      </Menu>
-
-      {/* Search Button */}
       <Button
         variant="contained"
         onClick={handleSearch}
         sx={{
-          minWidth: '60px',
+          minWidth: { xs: '100%', md: '60px' },
           height: '48px',
           borderRadius: '24px',
           backgroundColor: '#3A7D44',
           '&:hover': {
             backgroundColor: '#2D5F35',
           },
-          ml: 2,
+          ml: { xs: 0, md: 2 },
         }}
       >
         <SearchIcon />

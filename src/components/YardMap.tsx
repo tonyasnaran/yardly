@@ -5,7 +5,7 @@ import { Box } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import debounce from 'lodash/debounce';
 import MapSearchBar from './MapSearchBar';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase } from '@/lib/supabase';
 
 // Update default center to Santa Monica/Mid-City area
 const DEFAULT_CENTER = { lat: 34.0195, lng: -118.4912 }; // Santa Monica coordinates
@@ -207,53 +207,65 @@ export default function YardMap({
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [activeInfoWindow, setActiveInfoWindow] = useState<google.maps.InfoWindow | null>(null);
   const markersRef = useRef<{ [key: number]: google.maps.Marker }>({});
-  const supabase = createClientComponentClient();
-  const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
+  const [infoWindow, setInfoWindow] = useState<google.maps.InfoWindow | null>(null);
 
-  // Load user's favorites
+  // Load favorites
   useEffect(() => {
     const loadFavorites = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
+      if (!supabase) return;
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) return;
+
         const { data: favs } = await supabase
           .from('favorites')
           .select('yard_id')
           .eq('user_id', session.user.id);
-        
+
         if (favs) {
           setFavorites(new Set(favs.map(f => f.yard_id)));
         }
+      } catch (error) {
+        console.error('Error loading favorites:', error);
       }
     };
 
     loadFavorites();
-  }, [supabase]);
+  }, []);
 
   // Handle favorite toggle
-  const handleFavoriteToggle = async (yardId: number, event: MouseEvent) => {
+  const handleFavoriteToggle = async (yardId: string, event: MouseEvent) => {
     event.stopPropagation();
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session?.user) {
-      router.push('/login');
-      return;
-    }
+    if (!supabase) return;
 
-    const newFavorites = new Set(favorites);
-    if (favorites.has(yardId)) {
-      await supabase
-        .from('favorites')
-        .delete()
-        .eq('user_id', session.user.id)
-        .eq('yard_id', yardId);
-      newFavorites.delete(yardId);
-    } else {
-      await supabase
-        .from('favorites')
-        .insert([{ user_id: session.user.id, yard_id: yardId }]);
-      newFavorites.add(yardId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        // Redirect to sign in or show sign in modal
+        return;
+      }
+
+      const newFavorites = new Set(favorites);
+      if (newFavorites.has(yardId)) {
+        await supabase
+          .from('favorites')
+          .delete()
+          .eq('user_id', session.user.id)
+          .eq('yard_id', yardId);
+        newFavorites.delete(yardId);
+      } else {
+        await supabase
+          .from('favorites')
+          .insert([{ user_id: session.user.id, yard_id: yardId }]);
+        newFavorites.add(yardId);
+      }
+      setFavorites(newFavorites);
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
     }
-    setFavorites(newFavorites);
   };
 
   // Create InfoWindow content

@@ -13,23 +13,23 @@ const GoogleMapsScript = () => {
     // Check if the script is already loaded
     if (window.google) return;
 
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
-    script.async = true;
-    script.defer = true;
+    // Create the script loader
+    const loader = document.createElement('script');
+    loader.src = 'https://maps.googleapis.com/maps/api/js/loader.js';
+    loader.async = true;
 
-    // Define the callback function
-    window.initMap = () => {
-      // The map will be initialized in the YardMap component
-      console.log('Google Maps API loaded');
+    loader.onload = () => {
+      // Once the loader is ready, load the main API
+      (window as any).google.maps.importLibrary('places').then(() => {
+        console.log('Google Maps Places library loaded');
+      });
     };
 
-    document.head.appendChild(script);
+    document.head.appendChild(loader);
 
     return () => {
       // Cleanup
-      document.head.removeChild(script);
-      delete window.initMap;
+      document.head.removeChild(loader);
     };
   }, []);
 

@@ -352,7 +352,7 @@ export default function Home() {
               variant="h1"
               sx={{
                 fontWeight: 900,
-                fontSize: { xs: '2.5rem', sm: '3rem', md: '4.5rem' },
+                fontSize: { xs: '2rem', sm: '3rem', md: '4.5rem' },  // Reduced mobile size from 2.5rem to 2rem
                 lineHeight: 1.2,
                 letterSpacing: '-0.02em',
                 textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
@@ -360,7 +360,7 @@ export default function Home() {
                 color: 'white',
                 overflow: 'visible',
                 textOverflow: 'clip',
-                mb: { xs: 2, md: 3 },  // Reduced margin bottom
+                mb: { xs: 2, md: 3 },
               }}
             >
               Your party, their yard
@@ -376,13 +376,13 @@ export default function Home() {
                 '&:hover': {
                   bgcolor: 'rgba(255, 255, 255, 0.9)',
                 },
-                px: { xs: 6, md: 8 },
-                py: { xs: 2, md: 3 },
-                fontSize: { xs: '1.2rem', md: '1.4rem' },
+                px: { xs: 5, md: 6.5 },  // Increased from 4,5.3 to 5,6.5
+                py: { xs: 1.5, md: 2.3 },  // Increased from 1.3,2 to 1.5,2.3
+                fontSize: { xs: '1rem', md: '1.1rem' },  // Increased from 0.8,0.93 to 1,1.1
                 fontWeight: 'bold',
                 borderRadius: '50px',
                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                mb: { xs: 2, md: 3 },  // Reduced margin bottom from 4/8 to 2/3
+                mb: { xs: 2, md: 3 },
               }}
             >
               Discover How It Works

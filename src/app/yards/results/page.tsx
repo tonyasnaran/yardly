@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   Container,
@@ -26,6 +26,9 @@ import { useSession } from 'next-auth/react';
 import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
 import Favorite from '@mui/icons-material/Favorite';
 import { format, parseISO } from 'date-fns';
+import YardCard from '@/components/YardCard';
+import YardMap from '@/components/YardMap';
+import { MapBounds } from '@/components/YardMap';
 
 interface Yard {
   id: number;
@@ -41,6 +44,23 @@ interface Yard {
   nearbyAttractions: string[];
 }
 
+function LoadingFallback() {
+  return (
+    <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+      <CircularProgress />
+    </Box>
+  );
+}
+
+async function fetchYards(params: { [key: string]: string }) {
+  const searchParams = new URLSearchParams(params);
+  const response = await fetch(`/api/yards/map?${searchParams.toString()}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch yards');
+  }
+  return response.json();
+}
+
 function YardResultsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -52,6 +72,7 @@ function YardResultsContent() {
   const [favorites, setFavorites] = useState<number[]>([]);
   const [isLoadingFavorites, setIsLoadingFavorites] = useState(true);
   const [searchSummary, setSearchSummary] = useState('');
+  const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
 
   // Function to format the search summary
   const formatSearchSummary = (city: string, checkIn: string | null, checkOut: string | null, guests: string) => {
@@ -81,56 +102,39 @@ function YardResultsContent() {
     return summary.join(' | ');
   };
 
+  const updateYards = useCallback(async (params: { [key: string]: string }) => {
+    try {
+      setLoading(true);
+      const { yards: newYards } = await fetchYards(params);
+      setYards(newYards);
+    } catch (error) {
+      console.error('Error fetching yards:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Initial fetch when search params change
   useEffect(() => {
-    const fetchYards = async () => {
-      try {
-        const city = searchParams.get('city') || '';
-        const checkIn = searchParams.get('checkIn');
-        const checkOut = searchParams.get('checkOut');
-        const guests = searchParams.get('guests') || '5';
+    const params: { [key: string]: string } = {};
+    searchParams.forEach((value, key) => {
+      params[key] = value;
+    });
+    updateYards(params);
+  }, [searchParams, updateYards]);
 
-        // Update search summary
-        const summary = formatSearchSummary(city, checkIn, checkOut, guests);
-        setSearchSummary(summary);
-
-        const response = await fetch('/api/yards', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            city,
-            guests,
-            checkIn,
-            checkOut,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch yards');
-        }
-
-        const data = await response.json();
-        
-        // Filter yards based on search criteria
-        const filteredYards = data.yards.filter((yard: Yard) => {
-          const cityMatch = !city || yard.city.toLowerCase().includes(city.toLowerCase());
-          const guestMatch = yard.guests >= parseInt(guests);
-          return cityMatch && guestMatch;
-        });
-
-        setYards(filteredYards);
-        setFilteredYards(filteredYards);
-      } catch (error) {
-        console.error('Error fetching yards:', error);
-        setError('Failed to load yards. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchYards();
-  }, [searchParams]);
+  // Handle map bounds updates
+  const handleBoundsChanged = useCallback((bounds: MapBounds) => {
+    const params: { [key: string]: string } = {};
+    searchParams.forEach((value, key) => {
+      params[key] = value;
+    });
+    params.north = bounds.north.toString();
+    params.south = bounds.south.toString();
+    params.east = bounds.east.toString();
+    params.west = bounds.west.toString();
+    updateYards(params);
+  }, [searchParams, updateYards]);
 
   // Load favorites when user is authenticated
   useEffect(() => {
@@ -387,16 +391,16 @@ function YardResultsContent() {
           </Grid>
         </Grid>
       </Container>
-    </Box>
-  );
-}
 
-function LoadingFallback() {
-  return (
-    <Container sx={{ py: 8, textAlign: 'center' }}>
-      <CircularProgress />
-      <Typography sx={{ mt: 2 }}>Loading results...</Typography>
-    </Container>
+      {/* Map Section */}
+      <Box mt={4} mb={6}>
+        <YardMap
+          yards={yards}
+          onBoundsChanged={handleBoundsChanged}
+          onMapLoaded={setMapInstance}
+        />
+      </Box>
+    </Box>
   );
 }
 

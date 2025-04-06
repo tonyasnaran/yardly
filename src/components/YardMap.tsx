@@ -37,6 +37,9 @@ interface YardMapProps {
   onMapLoaded?: (map: google.maps.Map) => void;
 }
 
+// Update SVG path for custom marker - simplified pin with house
+const MARKER_PATH = "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z";
+
 export default function YardMap({ 
   yards, 
   onMarkerClick, 
@@ -164,12 +167,13 @@ export default function YardMap({
         map,
         title: yard.title,
         icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 10,
+          path: MARKER_PATH,
           fillColor: '#3A7D44',
           fillOpacity: 1,
           strokeColor: '#FFFFFF',
           strokeWeight: 2,
+          scale: 2,
+          anchor: new google.maps.Point(12, 24),
         },
       });
 

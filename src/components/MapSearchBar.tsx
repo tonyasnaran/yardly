@@ -39,39 +39,44 @@ export default function MapSearchBar({ onPlaceSelected }: MapSearchBarProps) {
     <Box
       sx={{
         position: 'absolute',
-        top: 16,
-        left: 16,
+        top: 32,
+        left: 32,
         zIndex: 1,
-        width: '300px',
+        width: '400px',
+        backgroundColor: 'white',
+        borderRadius: 2,
+        padding: '16px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
       }}
     >
       <Typography
-        variant="subtitle2"
+        variant="subtitle1"
         sx={{
-          mb: 1,
-          fontWeight: 600,
+          mb: 1.5,
           color: '#1A1A1A',
+          fontWeight: 500,
         }}
       >
         Search Yards near You
       </Typography>
       <Paper
-        elevation={2}
+        elevation={0}
         sx={{
           p: '2px 4px',
           display: 'flex',
           alignItems: 'center',
           borderRadius: 2,
           bgcolor: 'white',
+          border: '1px solid #E0E0E0',
           '&:hover': {
-            boxShadow: 3,
+            borderColor: '#3A7D44',
           },
         }}
       >
         <SearchIcon
           sx={{
             p: 1,
-            color: '#3A7D44',
+            color: '#757575',
           }}
         />
         <InputBase
@@ -81,10 +86,11 @@ export default function MapSearchBar({ onPlaceSelected }: MapSearchBarProps) {
             ml: 1,
             flex: 1,
             '& input': {
-              py: 1,
-              fontSize: '0.95rem',
+              py: 1.5,
+              fontSize: '1rem',
+              fontWeight: 500,
               '&::placeholder': {
-                color: '#666',
+                color: '#9E9E9E',
                 opacity: 1,
               },
             },

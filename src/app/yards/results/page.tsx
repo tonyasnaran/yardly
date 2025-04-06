@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   Container,
@@ -41,7 +41,7 @@ interface Yard {
   nearbyAttractions: string[];
 }
 
-export default function YardResults() {
+function YardResultsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -388,5 +388,22 @@ export default function YardResults() {
         </Grid>
       </Container>
     </Box>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <Container sx={{ py: 8, textAlign: 'center' }}>
+      <CircularProgress />
+      <Typography sx={{ mt: 2 }}>Loading results...</Typography>
+    </Container>
+  );
+}
+
+export default function YardResults() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <YardResultsContent />
+    </Suspense>
   );
 } 

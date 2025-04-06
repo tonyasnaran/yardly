@@ -37,6 +37,7 @@ import Image from 'next/image';
 import Group from '@mui/icons-material/Group';
 import LocalActivity from '@mui/icons-material/LocalActivity';
 import SearchBar from '@/components/SearchBar';
+import YardMap from '@/components/YardMap';
 
 interface Yard {
   id: number;
@@ -352,7 +353,7 @@ export default function Home() {
               variant="h1"
               sx={{
                 fontWeight: 900,
-                fontSize: { xs: '2rem', sm: '3rem', md: '4.5rem' },  // Reduced mobile size from 2.5rem to 2rem
+                fontSize: { xs: '2.2rem', sm: '3rem', md: '4.5rem' },  // Increased mobile size from 2rem to 2.2rem
                 lineHeight: 1.2,
                 letterSpacing: '-0.02em',
                 textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
@@ -404,6 +405,28 @@ export default function Home() {
       </Box>
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
+        {/* Interactive Map Section */}
+        <Box sx={{ mb: 6 }}>
+          <Typography 
+            variant="h4" 
+            component="h2" 
+            sx={{ 
+              mb: 3, 
+              color: '#3A7D44',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+            }}
+          >
+            Explore Yards Near You
+          </Typography>
+          <YardMap 
+            yards={filteredYards} 
+            onMarkerClick={(yardId) => router.push(`/yards/${yardId}`)}
+          />
+        </Box>
+
         {/* Featured Yards Section */}
         <Typography 
           variant="h4" 

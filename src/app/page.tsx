@@ -36,6 +36,7 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Group from '@mui/icons-material/Group';
 import LocalActivity from '@mui/icons-material/LocalActivity';
+import SearchBar from '@/components/SearchBar';
 
 interface Yard {
   id: number;
@@ -308,161 +309,101 @@ export default function Home() {
       {/* AppBar */}
       <AppBar position="static" sx={{ bgcolor: '#3A7D44' }}>
         <Toolbar>
-          <Typography
-            variant="h6"
-            component="div"
-            sx={{ 
-              flexGrow: 1,
-              cursor: 'pointer',
-              '&:hover': {
-                opacity: 0.8,
-              },
-            }}
-            onClick={() => router.push('/')}
-          >
-            Yardly
-          </Typography>
-          {/* ... rest of the AppBar content ... */}
+          {/* Empty toolbar to maintain the green header bar */}
         </Toolbar>
       </AppBar>
 
-      {/* Hero Section */}
+      {/* Hero Section with Search Bar */}
       <Box
         sx={{
           bgcolor: '#3A7D44',
           color: 'white',
-          py: { xs: 4, md: 8 },
+          py: { xs: 4, md: 8 },  // Reduced from 8/16 to 4/8
           px: { xs: 2, md: 4 },
           textAlign: 'center',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: { xs: '25vh', sm: '30vh', md: '60vh' },
+          minHeight: { xs: '25vh', sm: '30vh', md: '60vh' },  // Reduced from 50/60/120vh to 25/30/60vh
           position: 'relative',
         }}
       >
         <Container 
-          maxWidth="md"
+          maxWidth="lg"
           sx={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: { xs: 2, md: 4 },
-            py: { xs: 2, md: 4 },
+            gap: { xs: 2, md: 4 },  // Reduced gap
+            py: { xs: 2, md: 4 },  // Reduced padding
           }}
         >
-          <Typography
-            variant="h1"
+          <Box
             sx={{
-              fontWeight: 900,
-              fontSize: { xs: '1.75rem', sm: '2rem', md: '3rem' },
-              lineHeight: 1.2,
-              letterSpacing: '-0.02em',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-              whiteSpace: 'nowrap',
-              color: 'white',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
               maxWidth: '100%',
-              overflow: 'visible',
-              textOverflow: 'clip',
-              mb: { xs: 1, md: 2 },
             }}
           >
-            Your party, their yard
-          </Typography>
-          <Button
-            variant="contained"
-            size="large"
-            onClick={() => router.push('/about')}
-            sx={{
-              bgcolor: 'white',
-              color: '#3A7D44',
-              '&:hover': {
-                bgcolor: 'rgba(255, 255, 255, 0.9)',
-              },
-              px: { xs: 4, md: 6 },
-              py: { xs: 1, md: 2 },
-              fontSize: { xs: '1rem', md: '1.2rem' },
-              fontWeight: 'bold',
-              borderRadius: '50px',
-              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+            <Typography
+              variant="h1"
+              sx={{
+                fontWeight: 900,
+                fontSize: { xs: '2.5rem', sm: '3rem', md: '4.5rem' },
+                lineHeight: 1.2,
+                letterSpacing: '-0.02em',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+                whiteSpace: 'nowrap',
+                color: 'white',
+                overflow: 'visible',
+                textOverflow: 'clip',
+                mb: { xs: 2, md: 3 },  // Reduced margin bottom
+              }}
+            >
+              Your party, their yard
+            </Typography>
+
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => router.push('/about')}
+              sx={{
+                bgcolor: 'white',
+                color: '#3A7D44',
+                '&:hover': {
+                  bgcolor: 'rgba(255, 255, 255, 0.9)',
+                },
+                px: { xs: 6, md: 8 },
+                py: { xs: 2, md: 3 },
+                fontSize: { xs: '1.2rem', md: '1.4rem' },
+                fontWeight: 'bold',
+                borderRadius: '50px',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                mb: { xs: 2, md: 3 },  // Reduced margin bottom from 4/8 to 2/3
+              }}
+            >
+              Discover How It Works
+            </Button>
+          </Box>
+          
+          {/* New Search Bar */}
+          <Box 
+            sx={{ 
+              width: '100%', 
+              maxWidth: 900, 
+              mx: 'auto',
+              mt: { xs: 1, md: 2 },  // Reduced margin top from 2/4 to 1/2
             }}
           >
-            Discover How It Works
-          </Button>
+            <SearchBar />
+          </Box>
         </Container>
       </Box>
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* Search Section */}
-        <Box sx={{ mb: 4 }}>
-          <TextField
-            fullWidth
-            label="Search by city"
-            value={city}
-            onChange={handleCityChange}
-            onBlur={handleCityBlur}
-            sx={{ mb: 2 }}
-          />
-          
-          {/* Guest Limit Dropdown */}
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Guest Limit</InputLabel>
-            <Select
-              multiple
-              value={selectedGuests}
-              onChange={handleGuestChange}
-              input={<OutlinedInput label="Guest Limit" />}
-              renderValue={(selected) => (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {selected.map((value) => (
-                    <Chip 
-                      key={value} 
-                      label={GUEST_OPTIONS.find(opt => opt.value === value)?.label}
-                      sx={{ bgcolor: '#3A7D44', color: 'white' }}
-                    />
-                  ))}
-                </Box>
-              )}
-            >
-              {GUEST_OPTIONS.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {/* Amenities Dropdown */}
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Amenities</InputLabel>
-            <Select
-              multiple
-              value={selectedAmenities}
-              onChange={handleAmenityChange}
-              input={<OutlinedInput label="Amenities" />}
-              renderValue={(selected) => (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {selected.map((value) => (
-                    <Chip 
-                      key={value} 
-                      label={AMENITY_OPTIONS.find(opt => opt.value === value)?.label}
-                      sx={{ bgcolor: '#3A7D44', color: 'white' }}
-                    />
-                  ))}
-                </Box>
-              )}
-            >
-              {AMENITY_OPTIONS.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-
         {/* Featured Yards Section */}
         <Typography 
           variant="h4" 

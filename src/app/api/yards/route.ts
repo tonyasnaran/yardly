@@ -142,17 +142,19 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { city, guests, amenities } = body;
+    const { city, guests, checkIn, checkOut } = body;
 
     // Filter yards based on search parameters
     let filteredYards = [...yards];
 
+    // Filter by city
     if (city) {
       filteredYards = filteredYards.filter(yard => 
         yard.city.toLowerCase().includes(city.toLowerCase())
       );
     }
 
+    // Filter by guest capacity
     if (guests) {
       const guestCount = parseInt(guests);
       filteredYards = filteredYards.filter(yard => 
@@ -160,14 +162,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (amenities) {
-      const amenityList = Array.isArray(amenities) ? amenities : [amenities];
-      filteredYards = filteredYards.filter(yard => 
-        amenityList.every(amenity => 
-          yard.amenities.includes(amenity)
-        )
-      );
-    }
+    // Note: In a real application, you would also:
+    // 1. Check availability based on checkIn and checkOut times
+    // 2. Query a real database instead of using static data
+    // 3. Implement pagination for large result sets
+    // 4. Add more sophisticated filtering and sorting options
 
     // Get the origin from the request
     const origin = request.headers.get('origin') || 'https://www.goyardly.com';
@@ -175,7 +174,13 @@ export async function POST(request: NextRequest) {
     // Return data in a consistent format
     return NextResponse.json({
       yards: filteredYards,
-      total: filteredYards.length
+      total: filteredYards.length,
+      filters: {
+        city,
+        guests,
+        checkIn,
+        checkOut
+      }
     }, { 
       headers: {
         ...corsHeaders(),

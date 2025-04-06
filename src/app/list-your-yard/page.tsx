@@ -198,12 +198,12 @@ export default function ListYourYardPage() {
                   }}
                   renderValue={(selected) => (selected as string[]).join(', ')}
                 >
-                  <MenuItem value="grill">Grill</MenuItem>
-                  <MenuItem value="pool">Pool</MenuItem>
-                  <MenuItem value="firepit">Fire Pit</MenuItem>
-                  <MenuItem value="playground">Playground</MenuItem>
-                  <MenuItem value="hottub">Hot Tub</MenuItem>
-                  <MenuItem value="outdoor_kitchen">Outdoor Kitchen</MenuItem>
+                  <MenuItem value="Grill">Grill</MenuItem>
+                  <MenuItem value="Pool">Pool</MenuItem>
+                  <MenuItem value="Fire Pit">Fire Pit</MenuItem>
+                  <MenuItem value="Playground">Playground</MenuItem>
+                  <MenuItem value="Hot Tub">Hot Tub</MenuItem>
+                  <MenuItem value="Outdoor Kitchen">Outdoor Kitchen</MenuItem>
                 </Select>
                 <FormHelperText>Select all that apply</FormHelperText>
               </FormControl>

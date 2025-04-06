@@ -21,7 +21,7 @@ const yards = [
     price: 65,
     guests: 20,
     image: "/images/yards/Los Angeles Downtown Rooftop.png",
-    amenities: ["outdoor_kitchen", "firepit", "playground"],
+    amenities: ["Outdoor Kitchen", "Fire Pit", "Playground"],
     description: "A modern rooftop space with panoramic views of the LA skyline. Features a fully equipped outdoor kitchen, cozy fire pit, and a small playground area for kids. Perfect for corporate events and family gatherings with stunning city views.",
     rating: 4.7,
     reviews: 18,

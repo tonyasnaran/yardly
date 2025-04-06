@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Box } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import debounce from 'lodash/debounce';
+import MapSearchBar from './MapSearchBar';
 
 // Sample coordinates for cities (you can adjust these)
 const CITY_COORDINATES: { [key: string]: { lat: number; lng: number } } = {
@@ -55,6 +56,28 @@ export default function YardMap({
     }, 500),
     [onBoundsChanged]
   );
+
+  // Handle place selection from search
+  const handlePlaceSelected = useCallback((place: google.maps.places.PlaceResult) => {
+    if (!map || !place.geometry?.location) return;
+
+    // Pan and zoom to the selected location
+    map.panTo(place.geometry.location);
+    map.setZoom(13);
+
+    // Get the new bounds and trigger the update
+    const bounds = map.getBounds();
+    if (bounds) {
+      const ne = bounds.getNorthEast();
+      const sw = bounds.getSouthWest();
+      debouncedBoundsChanged({
+        north: ne.lat(),
+        south: sw.lat(),
+        east: ne.lng(),
+        west: sw.lng()
+      });
+    }
+  }, [map, debouncedBoundsChanged]);
 
   useEffect(() => {
     if (!mapRef.current || !window.google) return;
@@ -264,7 +287,6 @@ export default function YardMap({
 
   return (
     <Box
-      ref={mapRef}
       sx={{
         width: '100%',
         height: '400px',
@@ -272,7 +294,17 @@ export default function YardMap({
         overflow: 'hidden',
         boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
         mb: 4,
+        position: 'relative',
       }}
-    />
+    >
+      <MapSearchBar onPlaceSelected={handlePlaceSelected} />
+      <Box
+        ref={mapRef}
+        sx={{
+          width: '100%',
+          height: '100%',
+        }}
+      />
+    </Box>
   );
 } 

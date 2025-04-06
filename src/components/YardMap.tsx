@@ -205,11 +205,11 @@ export default function YardMap({
   const router = useRouter();
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [activeInfoWindow, setActiveInfoWindow] = useState<google.maps.InfoWindow | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const markersRef = useRef<{ [key: number]: google.maps.Marker }>({});
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
-  const [infoWindow, setInfoWindow] = useState<google.maps.InfoWindow | null>(null);
+  const [activeInfoWindow, setActiveInfoWindow] = useState<google.maps.InfoWindow | null>(null);
 
   // Load favorites
   useEffect(() => {
@@ -332,79 +332,98 @@ export default function YardMap({
     }
   }, [map, debouncedBoundsChanged]);
 
+  // Initialize map
   useEffect(() => {
-    if (!mapRef.current || !window.google) return;
-
-    // Add custom styles to document
-    const styleSheet = document.createElement('style');
-    styleSheet.textContent = INFO_WINDOW_STYLES;
-    document.head.appendChild(styleSheet);
-
-    // Calculate the center based on available yards
-    let initialCenter = DEFAULT_CENTER;
-    if (yards.length > 0) {
-      // If we have yards with coordinates, use their average
-      const yardsWithCoords = yards.filter(yard => yard.lat && yard.lng);
-      if (yardsWithCoords.length > 0) {
-        const totalLat = yardsWithCoords.reduce((sum, yard) => sum + (yard.lat || 0), 0);
-        const totalLng = yardsWithCoords.reduce((sum, yard) => sum + (yard.lng || 0), 0);
-        initialCenter = {
-          lat: totalLat / yardsWithCoords.length,
-          lng: totalLng / yardsWithCoords.length
-        };
-      } else {
-        // If no yards have coordinates, use the city with the most yards
-        const cityCounts = yards.reduce((acc, yard) => {
-          acc[yard.city] = (acc[yard.city] || 0) + 1;
-          return acc;
-        }, {} as { [key: string]: number });
-
-        const mostPopularCity = Object.entries(cityCounts)
-          .sort(([,a], [,b]) => b - a)[0][0];
-
-        initialCenter = CITY_COORDINATES[mostPopularCity] || DEFAULT_CENTER;
+    const initializeMap = async () => {
+      if (!mapRef.current || !window.google) {
+        setError('Google Maps not loaded');
+        return;
       }
-    }
 
-    // Initialize the map
-    const newMap = new window.google.maps.Map(mapRef.current, {
-      center: initialCenter,
-      zoom: 12, // Slightly zoomed out to show more of the area
-      styles: MAP_STYLES,
-      mapTypeControl: false,
-      streetViewControl: false,
-      fullscreenControl: false,
-      zoomControl: true,
-      zoomControlOptions: {
-        position: google.maps.ControlPosition.RIGHT_TOP
-      },
-    });
+      try {
+        setIsLoading(true);
 
-    // Add bounds changed listener
-    newMap.addListener('bounds_changed', () => {
-      const bounds = newMap.getBounds();
-      if (bounds) {
-        const ne = bounds.getNorthEast();
-        const sw = bounds.getSouthWest();
-        debouncedBoundsChanged({
-          north: ne.lat(),
-          south: sw.lat(),
-          east: ne.lng(),
-          west: sw.lng()
+        // Add custom styles to document
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = INFO_WINDOW_STYLES;
+        document.head.appendChild(styleSheet);
+
+        // Calculate initial center
+        let initialCenter = DEFAULT_CENTER;
+        if (yards.length > 0) {
+          const yardsWithCoords = yards.filter(yard => yard.lat && yard.lng);
+          if (yardsWithCoords.length > 0) {
+            const totalLat = yardsWithCoords.reduce((sum, yard) => sum + (yard.lat || 0), 0);
+            const totalLng = yardsWithCoords.reduce((sum, yard) => sum + (yard.lng || 0), 0);
+            initialCenter = {
+              lat: totalLat / yardsWithCoords.length,
+              lng: totalLng / yardsWithCoords.length
+            };
+          } else {
+            const cityCounts = yards.reduce((acc, yard) => {
+              acc[yard.city] = (acc[yard.city] || 0) + 1;
+              return acc;
+            }, {} as { [key: string]: number });
+
+            const mostPopularCity = Object.entries(cityCounts)
+              .sort(([,a], [,b]) => b - a)[0][0];
+
+            initialCenter = CITY_COORDINATES[mostPopularCity] || DEFAULT_CENTER;
+          }
+        }
+
+        // Initialize map
+        const newMap = new window.google.maps.Map(mapRef.current, {
+          center: initialCenter,
+          zoom: 12,
+          styles: MAP_STYLES,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+          zoomControl: true,
+          zoomControlOptions: {
+            position: google.maps.ControlPosition.RIGHT_TOP
+          },
+          gestureHandling: 'cooperative',
         });
-      }
-    });
 
-    setMap(newMap);
-    onMapLoaded?.(newMap);
+        // Add bounds changed listener
+        newMap.addListener('bounds_changed', () => {
+          const bounds = newMap.getBounds();
+          if (bounds) {
+            const ne = bounds.getNorthEast();
+            const sw = bounds.getSouthWest();
+            debouncedBoundsChanged({
+              north: ne.lat(),
+              south: sw.lat(),
+              east: ne.lng(),
+              west: sw.lng()
+            });
+          }
+        });
+
+        setMap(newMap);
+        onMapLoaded?.(newMap);
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Error initializing map:', err);
+        setError('Failed to initialize map');
+        setIsLoading(false);
+      }
+    };
+
+    initializeMap();
 
     return () => {
-      document.head.removeChild(styleSheet);
-      // Cleanup markers when component unmounts
+      // Cleanup markers and styles
       Object.values(markersRef.current).forEach(marker => marker.setMap(null));
       markersRef.current = {};
+      const styleSheet = document.querySelector('style[data-map-styles]');
+      if (styleSheet) {
+        document.head.removeChild(styleSheet);
+      }
     };
-  }, [debouncedBoundsChanged, onMapLoaded]);
+  }, [yards, debouncedBoundsChanged, onMapLoaded]);
 
   useEffect(() => {
     if (!map || !yards.length) return;
@@ -520,11 +539,29 @@ export default function YardMap({
       }}
     >
       <MapSearchBar onPlaceSelected={handlePlaceSelected} />
+      {error && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            padding: 2,
+            borderRadius: 1,
+            zIndex: 1,
+          }}
+        >
+          {error}
+        </Box>
+      )}
       <Box
         ref={mapRef}
         sx={{
           width: '100%',
           height: '100%',
+          opacity: isLoading ? 0.5 : 1,
+          transition: 'opacity 0.3s ease',
         }}
       />
     </Box>

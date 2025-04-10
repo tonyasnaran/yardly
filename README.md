@@ -1,57 +1,126 @@
-# Yardly - Outdoor Space Booking Platform
+# Yardly
 
-Yardly is a web application that allows users to book outdoor spaces (yards) by the hour. Similar to Airbnb, but specifically for outdoor spaces, users can browse yards based on city, guest limit, and amenities.
+Yardly is a modern platform for discovering and booking unique outdoor spaces for events and gatherings. Think of it as "Airbnb for yards" - connecting people who need outdoor space with those who have beautiful yards to share.
 
 ## Features
 
-- Browse yards by city, guest limit, and amenities
-- View detailed information about each yard including:
-  - Pricing per hour
-  - Available times
-  - Photos
-  - Amenities
-- Clean and intuitive user interface
-- Responsive design for all devices
+- 🌟 Modern, responsive UI built with Next.js 14 and Material-UI
+- 🗺️ Interactive map integration with Google Maps
+- 🔐 Secure authentication with Google OAuth
+- 🎯 Real-time updates using Supabase
+- 📱 Mobile-friendly design
+- ❤️ Favorite yards functionality
+- 🔍 Advanced search and filtering
+- 📊 Admin dashboard for yard management
 
 ## Tech Stack
 
-- Next.js 14 (React framework)
-- Material-UI (MUI) for UI components
-- TypeScript for type safety
-- API Routes for backend functionality
+- **Frontend:**
+  - Next.js 14 (App Router)
+  - Material-UI (MUI)
+  - TypeScript
+  - Google Maps API
+
+- **Backend:**
+  - Supabase (Database & Authentication)
+  - PostgreSQL
+  - Row Level Security (RLS)
+
+- **Deployment:**
+  - Vercel (Frontend)
+  - Supabase (Backend)
 
 ## Getting Started
 
-1. Clone the repository
+### Prerequisites
+
+- Node.js 18+ 
+- npm or yarn
+- Supabase account
+- Google Cloud account (for Maps and OAuth)
+
+### Environment Variables
+
+Create a `.env.local` file in the root directory with:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+```
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/yardly.git
+cd yardly
+```
+
 2. Install dependencies:
-   ```bash
-   npm install
-   ```
+```bash
+npm install
+# or
+yarn install
+```
+
 3. Run the development server:
-   ```bash
-   npm run dev
-   ```
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
+```bash
+npm run dev
+# or
+yarn dev
+```
 
-## Project Structure
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-- `/src/app` - Next.js app directory containing pages and API routes
-- `/src/app/api` - API routes for handling data
-- `/src/components` - Reusable React components
-- `/public` - Static assets
+### Database Setup
 
-## Development
+1. Create a new Supabase project
+2. Run the migrations in the `supabase/migrations` folder
+3. Set up the required tables:
+   - yards
+   - favorites
+   - user_roles
 
-The project uses:
-- Material-UI for styling and components
-- Next.js API routes for backend functionality
-- TypeScript for type safety
-- ESLint for code linting
+## Features in Detail
+
+### Yard Listings
+- Browse available yards
+- View detailed information
+- See yard locations on the map
+- Filter by guest capacity and amenities
+
+### User Features
+- Google authentication
+- Save favorite yards
+- Book yards for events
+- View booking history
+
+### Admin Features
+- Manage yard listings
+- View and manage bookings
+- User role management
+- Analytics dashboard
 
 ## Contributing
 
 1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a new Pull Request 
+2. Create a new branch
+3. Make your changes
+4. Run tests and ensure code quality
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Next.js team for the amazing framework
+- Supabase team for the backend infrastructure
+- Material-UI team for the component library
+- All contributors who have helped shape this project
+
+## Contact
+
+For any questions or concerns, please open an issue in the repository. 

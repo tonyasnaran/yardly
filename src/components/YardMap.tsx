@@ -41,9 +41,9 @@ interface YardMapProps {
     name: string;
     price: number;
     image_url: string;
-    city: string;
-    lat: number;
-    lng: number;
+    city?: string;
+    lat?: number;
+    lng?: number;
   }>;
   onMarkerClick?: (id: string) => void;
   onBoundsChanged?: (bounds: MapBounds) => void;
@@ -448,11 +448,18 @@ export default function YardMap({
     const newMarkers = validYards.map(yard => {
       console.log('Creating marker for yard:', yard);
       
+      // Skip yards without coordinates
+      if (!yard.lat || !yard.lng) {
+        console.log('Skipping yard without coordinates:', yard.name);
+        return null;
+      }
+      
       // Check for overlapping coordinates
       const overlappingYard = validYards.find(
         other => other.id !== yard.id && 
-        Math.abs(other.lat - yard.lat) < 0.0001 && 
-        Math.abs(other.lng - yard.lng) < 0.0001
+        other.lat && other.lng && // Check that other yard has coordinates
+        Math.abs(other.lat - yard.lat!) < 0.0001 && 
+        Math.abs(other.lng - yard.lng!) < 0.0001
       );
 
       // If overlapping, slightly offset the position
@@ -555,8 +562,8 @@ export default function YardMap({
       return marker;
     });
 
-    setMarkers(newMarkers);
-    console.log('New markers set:', newMarkers.length);
+    setMarkers(newMarkers.filter(Boolean) as google.maps.Marker[]);
+    console.log('New markers set:', newMarkers.filter(Boolean).length);
 
     // If we have valid yards, fit bounds to include all markers
     if (validYards.length > 0) {

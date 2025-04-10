@@ -46,7 +46,7 @@ type GuestLimit = 'Up to 10 guests' | 'Up to 15 guests' | 'Up to 20 guests' | 'U
 
 // Define the Yard interface
 interface YardData {
-  id: string;
+  id: number;
   name: string;
   description: string;
   price: number;
@@ -152,12 +152,12 @@ export default function Home() {
           .from('favorites')
           .delete()
           .eq('user_id', session.user.id)
-          .eq('yard_id', yardId);
+          .eq('yard_id', parseInt(yardId));
         setFavorites(favorites.filter(id => id !== yardId));
       } else {
         await supabase
           .from('favorites')
-          .insert({ user_id: session.user.id, yard_id: yardId });
+          .insert({ user_id: session.user.id, yard_id: parseInt(yardId) });
         setFavorites([...favorites, yardId]);
       }
     } catch (error) {
@@ -457,8 +457,16 @@ export default function Home() {
             Explore Yards Near You
           </Typography>
           <YardMap
-            yards={yards}
-            onMarkerClick={(id) => router.push(`/yards/${id}`)}
+            yards={yards.filter(yard => yard.lat && yard.lng).map(yard => ({
+              id: yard.id.toString(),
+              name: yard.name,
+              price: yard.price,
+              image_url: yard.image_url,
+              city: yard.city || '',
+              lat: yard.lat!,
+              lng: yard.lng!
+            }))}
+            onMarkerClick={(id) => router.push(`/yards/${id}/book`)}
           />
         </Box>
 
@@ -480,7 +488,7 @@ export default function Home() {
             {yards.map((yard) => (
               <Grid item xs={12} sm={6} md={4} key={yard.id}>
                 <YardCard
-                  id={yard.id}
+                  id={yard.id.toString()}
                   title={yard.name}
                   description={yard.description}
                   price={yard.price}
@@ -488,8 +496,8 @@ export default function Home() {
                   amenities={yard.amenities || []}
                   city={yard.city || ''}
                   guest_limit={yard.guest_limit || 'Up to 10 guests'}
-                  isFavorite={favorites.includes(yard.id)}
-                  onFavoriteToggle={() => handleFavoriteToggle(yard.id)}
+                  isFavorite={favorites.includes(yard.id.toString())}
+                  onFavoriteToggle={() => handleFavoriteToggle(yard.id.toString())}
                 />
               </Grid>
             ))}

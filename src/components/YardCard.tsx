@@ -14,7 +14,7 @@ import {
 import { Favorite, FavoriteBorder } from '@mui/icons-material';
 
 interface YardCardProps {
-  id: string;
+  id: string | number;
   title: string;
   description: string;
   price: number;
@@ -44,7 +44,7 @@ export default function YardCard({
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onFavoriteToggle) {
-      onFavoriteToggle(id);
+      onFavoriteToggle(id.toString());
     }
   };
 

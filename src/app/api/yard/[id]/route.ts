@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabaseClient';
 
 // Mock data for development
 const yards = [
@@ -47,20 +48,51 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const yard = yards.find(y => y.id === parseInt(params.id));
-    
-    if (!yard) {
+    const { id } = params;
+    console.log('Fetching yard with ID:', id);
+
+    const { data, error } = await supabase
+      .from('yards')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error('Supabase error:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch yard details' },
+        { status: 500 }
+      );
+    }
+
+    if (!data) {
+      console.log('No yard found with ID:', id);
       return NextResponse.json(
         { error: 'Yard not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(yard);
+    // Transform the data to match the expected format
+    const transformedData = {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      image_url: data.image_url,
+      amenities: data.amenities || [],
+      city: data.city,
+      guest_limit: data.guest_limit,
+      lat: data.lat,
+      lng: data.lng
+    };
+
+    console.log('Returning yard data:', transformedData);
+    return NextResponse.json(transformedData);
   } catch (error) {
-    console.error('Error fetching yard:', error);
+    console.error('Error fetching yard details:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to fetch yard details' },
       { status: 500 }
     );
   }

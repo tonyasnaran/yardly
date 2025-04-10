@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { supabase } from '@/lib/supabaseClient';
 
 if (!process.env.STRIPE_SECRET_KEY) {
   console.error('STRIPE_SECRET_KEY is not defined');
@@ -114,8 +115,26 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get yard details from mock data
-    const yard = yards.find(y => y.id === parseInt(yardId));
+    // Get yard details from Supabase
+    const { data: yard, error: yardError } = await supabase
+      .from('yards')
+      .select('*')
+      .eq('id', yardId)
+      .single();
+
+    if (yardError) {
+      console.error('Error fetching yard:', yardError);
+      return new NextResponse(
+        JSON.stringify({ error: 'Failed to fetch yard details' }),
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    }
+
     if (!yard) {
       console.error('Yard not found:', yardId);
       return new NextResponse(
@@ -166,7 +185,7 @@ export async function POST(request: Request) {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: yard.title,
+              name: yard.name,
               description: `Booking from ${checkInDate.toLocaleDateString()} to ${checkOutDate.toLocaleDateString()} for ${guests} guests`,
             },
             unit_amount: Math.round(total * 100), // Convert to cents
@@ -178,7 +197,7 @@ export async function POST(request: Request) {
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.goyardly.com'}/checkout/${'{CHECKOUT_SESSION_ID}'}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.goyardly.com'}/yards/${yardId}/book`,
       metadata: {
-        yardId: yardId.toString(),
+        yardId: yardId,
         checkIn: checkIn,
         checkOut: checkOut,
         guests: guests.toString(),

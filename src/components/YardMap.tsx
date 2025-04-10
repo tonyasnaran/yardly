@@ -6,6 +6,15 @@ import { useRouter } from 'next/navigation';
 import debounce from 'lodash/debounce';
 import MapSearchBar from './MapSearchBar';
 import { supabase } from '@/lib/supabase';
+import { Loader } from '@googlemaps/js-api-loader';
+
+// Initialize the Loader once outside the component
+const loader = new Loader({
+  apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+  version: 'weekly',
+  libraries: ['places'],
+  language: 'en',
+});
 
 // Update default center to Santa Monica/Mid-City area
 const DEFAULT_CENTER = { lat: 34.0195, lng: -118.4912 }; // Santa Monica coordinates
@@ -28,15 +37,15 @@ export interface MapBounds {
 
 interface YardMapProps {
   yards: Array<{
-    id: number;
-    title: string;
-    city: string;
+    id: string;
+    name: string;
     price: number;
-    image: string;
+    image_url: string;
+    city?: string;
     lat?: number;
     lng?: number;
   }>;
-  onMarkerClick?: (yardId: number) => void;
+  onMarkerClick?: (id: string) => void;
   onBoundsChanged?: (bounds: MapBounds) => void;
   onMapLoaded?: (map: google.maps.Map) => void;
 }
@@ -207,9 +216,9 @@ export default function YardMap({
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const markersRef = useRef<{ [key: number]: google.maps.Marker }>({});
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [activeInfoWindow, setActiveInfoWindow] = useState<google.maps.InfoWindow | null>(null);
+  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
 
   // Load favorites
   useEffect(() => {
@@ -277,15 +286,15 @@ export default function YardMap({
         <div style="position: relative;">
           <div style="width: 100%; height: 200px; overflow: hidden;">
             <img 
-              src="${yard.image}" 
-              alt="${yard.title}" 
+              src="${yard.image_url}" 
+              alt="${yard.name}" 
               style="width: 100%; height: 100%; object-fit: cover;"
             />
           </div>
         </div>
         <div style="padding: 16px;">
           <div style="font-weight: 600; font-size: 16px; margin-bottom: 8px; color: #1A1A1A;">
-            ${yard.title}
+            ${yard.name}
           </div>
           <div style="font-size: 18px; font-weight: 600; color: #3A7D44;">
             $${yard.price}/hour
@@ -335,47 +344,15 @@ export default function YardMap({
   // Initialize map
   useEffect(() => {
     const initializeMap = async () => {
-      if (!mapRef.current || !window.google) {
-        setError('Google Maps not loaded');
-        return;
-      }
-
       try {
         setIsLoading(true);
+        await loader.load();
+        
+        if (!mapRef.current) return;
 
-        // Add custom styles to document
-        const styleSheet = document.createElement('style');
-        styleSheet.textContent = INFO_WINDOW_STYLES;
-        document.head.appendChild(styleSheet);
-
-        // Calculate initial center
-        let initialCenter = DEFAULT_CENTER;
-        if (yards.length > 0) {
-          const yardsWithCoords = yards.filter(yard => yard.lat && yard.lng);
-          if (yardsWithCoords.length > 0) {
-            const totalLat = yardsWithCoords.reduce((sum, yard) => sum + (yard.lat || 0), 0);
-            const totalLng = yardsWithCoords.reduce((sum, yard) => sum + (yard.lng || 0), 0);
-            initialCenter = {
-              lat: totalLat / yardsWithCoords.length,
-              lng: totalLng / yardsWithCoords.length
-            };
-          } else {
-            const cityCounts = yards.reduce((acc, yard) => {
-              acc[yard.city] = (acc[yard.city] || 0) + 1;
-              return acc;
-            }, {} as { [key: string]: number });
-
-            const mostPopularCity = Object.entries(cityCounts)
-              .sort(([,a], [,b]) => b - a)[0][0];
-
-            initialCenter = CITY_COORDINATES[mostPopularCity] || DEFAULT_CENTER;
-          }
-        }
-
-        // Initialize map
-        const newMap = new window.google.maps.Map(mapRef.current, {
-          center: initialCenter,
-          zoom: 12,
+        const mapInstance = new google.maps.Map(mapRef.current, {
+          center: { lat: 34.0522, lng: -118.2437 }, // Los Angeles
+          zoom: 10,
           styles: MAP_STYLES,
           mapTypeControl: false,
           streetViewControl: false,
@@ -387,23 +364,30 @@ export default function YardMap({
           gestureHandling: 'cooperative',
         });
 
+        setMap(mapInstance);
+        if (onMapLoaded) {
+          onMapLoaded(mapInstance);
+        }
+
         // Add bounds changed listener
-        newMap.addListener('bounds_changed', () => {
-          const bounds = newMap.getBounds();
-          if (bounds) {
-            const ne = bounds.getNorthEast();
-            const sw = bounds.getSouthWest();
-            debouncedBoundsChanged({
-              north: ne.lat(),
-              south: sw.lat(),
-              east: ne.lng(),
-              west: sw.lng()
-            });
+        mapInstance.addListener('bounds_changed', () => {
+          if (onBoundsChanged) {
+            const bounds = mapInstance.getBounds();
+            if (bounds) {
+              const ne = bounds.getNorthEast();
+              const sw = bounds.getSouthWest();
+              onBoundsChanged({
+                north: ne.lat(),
+                south: sw.lat(),
+                east: ne.lng(),
+                west: sw.lng(),
+              });
+            }
           }
         });
 
-        setMap(newMap);
-        onMapLoaded?.(newMap);
+        const info = new google.maps.InfoWindow();
+        setActiveInfoWindow(info);
         setIsLoading(false);
       } catch (err) {
         console.error('Error initializing map:', err);
@@ -413,43 +397,23 @@ export default function YardMap({
     };
 
     initializeMap();
-
-    return () => {
-      // Cleanup markers and styles
-      Object.values(markersRef.current).forEach(marker => marker.setMap(null));
-      markersRef.current = {};
-      const styleSheet = document.querySelector('style[data-map-styles]');
-      if (styleSheet) {
-        document.head.removeChild(styleSheet);
-      }
-    };
-  }, [yards, debouncedBoundsChanged, onMapLoaded]);
+  }, [onMapLoaded, onBoundsChanged]);
 
   useEffect(() => {
-    if (!map || !yards.length) return;
+    if (!map) return;
 
     // Clear existing markers
-    Object.values(markersRef.current).forEach(marker => marker.setMap(null));
-    markersRef.current = {};
+    markers.forEach(marker => marker.setMap(null));
 
-    // Create markers for each yard
-    yards.forEach(yard => {
-      // Use provided coordinates if available, otherwise use city coordinates
-      let position;
-      if (yard.lat && yard.lng) {
-        position = { lat: yard.lat, lng: yard.lng };
-      } else {
-        const coordinates = CITY_COORDINATES[yard.city] || CITY_COORDINATES['Santa Monica'];
-        position = {
-          lat: coordinates.lat + (Math.random() - 0.5) * 0.02,
-          lng: coordinates.lng + (Math.random() - 0.5) * 0.02
-        };
-      }
+    // Filter yards with valid coordinates
+    const validYards = yards.filter(yard => yard.lat != null && yard.lng != null);
 
+    // Create new markers
+    const newMarkers = validYards.map(yard => {
       const marker = new google.maps.Marker({
-        position,
+        position: { lat: yard.lat!, lng: yard.lng! },
         map,
-        title: yard.title,
+        title: yard.name,
         icon: {
           path: MARKER_PATH,
           fillColor: '#3A7D44',
@@ -461,18 +425,58 @@ export default function YardMap({
         },
       });
 
+      let hoverTimeout: NodeJS.Timeout | null = null;
+      let isInfoWindowOpen = false;
+      let mouseOnInfoWindow = false;
+      let mouseOnMarker = false;
+
       const infoWindow = new google.maps.InfoWindow({
-        content: createInfoWindowContent(yard),
         maxWidth: 300,
       });
 
-      let isInfoWindowOpen = false;
-      let mouseOnInfoWindow = false;
+      const closeInfoWindow = () => {
+        if (!mouseOnMarker && !mouseOnInfoWindow) {
+          infoWindow.close();
+          setActiveInfoWindow(null);
+          isInfoWindowOpen = false;
+        }
+      };
 
-      marker.addListener('click', () => {
+      marker.addListener('mouseover', () => {
+        mouseOnMarker = true;
+        // Clear any existing timeout
+        if (hoverTimeout) {
+          clearTimeout(hoverTimeout);
+          hoverTimeout = null;
+        }
+
+        // Close any existing info window
         if (activeInfoWindow) {
           activeInfoWindow.close();
         }
+
+        // Open new info window
+        infoWindow.setContent(createInfoWindowContent(yard));
+        infoWindow.open(map, marker);
+        setActiveInfoWindow(infoWindow);
+        isInfoWindowOpen = true;
+      });
+
+      marker.addListener('mouseout', () => {
+        mouseOnMarker = false;
+        // Set timeout to close info window after 300ms
+        hoverTimeout = setTimeout(closeInfoWindow, 300);
+      });
+
+      marker.addListener('click', () => {
+        // Clear hover timeout on click
+        if (hoverTimeout) {
+          clearTimeout(hoverTimeout);
+          hoverTimeout = null;
+        }
+
+        infoWindow.close();
+        infoWindow.setContent(createInfoWindowContent(yard));
         infoWindow.open(map, marker);
         setActiveInfoWindow(infoWindow);
         isInfoWindowOpen = true;
@@ -481,46 +485,38 @@ export default function YardMap({
         }
       });
 
-      marker.addListener('mouseover', () => {
-        if (activeInfoWindow) {
-          activeInfoWindow.close();
-        }
-        infoWindow.open(map, marker);
-        setActiveInfoWindow(infoWindow);
-        isInfoWindowOpen = false;
-      });
-
-      marker.addListener('mouseout', () => {
-        setTimeout(() => {
-          if (!mouseOnInfoWindow && !isInfoWindowOpen) {
-            infoWindow.close();
-            setActiveInfoWindow(null);
-          }
-        }, 300);
-      });
-
       // Add event listener for InfoWindow DOM ready
-      google.maps.event.addListener(infoWindow, 'domready', () => {
+      google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
         const container = document.querySelector('.gm-style-iw-a');
         if (container) {
           container.addEventListener('mouseenter', () => {
             mouseOnInfoWindow = true;
+            if (hoverTimeout) {
+              clearTimeout(hoverTimeout);
+              hoverTimeout = null;
+            }
           });
           container.addEventListener('mouseleave', () => {
             mouseOnInfoWindow = false;
-            setTimeout(() => {
-              if (!mouseOnInfoWindow && !isInfoWindowOpen) {
-                infoWindow.close();
-                setActiveInfoWindow(null);
-              }
-            }, 300);
+            hoverTimeout = setTimeout(closeInfoWindow, 300);
           });
         }
       });
 
-      markersRef.current[yard.id] = marker;
+      return marker;
     });
-  }, [map, yards, onMarkerClick, router, favorites]);
+
+    setMarkers(newMarkers);
+
+    // If we have valid yards, fit bounds to include all markers
+    if (validYards.length > 0) {
+      const bounds = new google.maps.LatLngBounds();
+      validYards.forEach(yard => {
+        bounds.extend({ lat: yard.lat!, lng: yard.lng! });
+      });
+      map.fitBounds(bounds);
+    }
+  }, [map, yards, onMarkerClick]);
 
   return (
     <Box

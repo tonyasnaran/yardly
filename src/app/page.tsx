@@ -38,19 +38,27 @@ import Group from '@mui/icons-material/Group';
 import LocalActivity from '@mui/icons-material/LocalActivity';
 import SearchBar from '@/components/SearchBar';
 import YardMap from '@/components/YardMap';
+import YardCard from '@/components/YardCard';
+import { supabase } from '@/lib/supabaseClient';
 
-interface Yard {
-  id: number;
-  title: string;
-  city: string;
-  price: number;
-  guests: number;
-  image: string;
-  amenities: string[];
-  rating?: number;
+// Define the guest limit type
+type GuestLimit = 'Up to 10 guests' | 'Up to 15 guests' | 'Up to 20 guests' | 'Up to 25 guests';
+
+// Define the Yard interface
+interface YardData {
+  id: string;
+  name: string;
   description: string;
-  reviews: number;
-  nearbyAttractions: string[];
+  price: number;
+  image_url: string;
+  amenities?: string[];
+  city?: string;
+  rating?: number;
+  reviews?: number;
+  lat: number;
+  lng: number;
+  guest_limit: GuestLimit;
+  created_at: string;
 }
 
 const AMENITY_OPTIONS = [
@@ -72,59 +80,138 @@ const GUEST_OPTIONS = [
 ];
 
 export default function Home() {
-  const { data: session, status } = useSession();
-  const [favorites, setFavorites] = useState<number[]>([]);
-  const [isLoadingFavorites, setIsLoadingFavorites] = useState(true);
+  const router = useRouter();
+  const { data: session } = useSession();
+  const [yards, setYards] = useState<YardData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [isLoadingFavorites, setIsLoadingFavorites] = useState(false);
   const [city, setCity] = useState('');
   const [selectedGuests, setSelectedGuests] = useState<string[]>([]);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
-  const [yards, setYards] = useState<Yard[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
+  // Fetch yards from Supabase
   const fetchYards = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Use the current hostname for API requests
-      const apiUrl = `${window.location.origin}/api/yards`;
-      
-      console.log('Fetching yards from:', apiUrl);
-      
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
-      
-      console.log('Response status:', response.status);
-      
-      if (!response.ok) {
-        throw new Error(`API responded with status: ${response.status}`);
+      const { data, error: fetchError } = await supabase
+        .from('yards')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (fetchError) {
+        throw fetchError;
       }
-      
-      const data = await response.json();
-      console.log('Received data:', data);
-      
-      if (data.error) {
-        console.error('API error:', data.error);
-        setError(data.error);
-        setYards([]);
-      } else {
-        setYards(data.yards || []);
-      }
+
+      setYards(data || []);
     } catch (error) {
       console.error('Error fetching yards:', error);
       setError('Failed to fetch yards. Please try again later.');
-      setYards([]);
     } finally {
       setLoading(false);
     }
   };
+
+  // Load favorites when session changes
+  const loadFavorites = async () => {
+    if (session?.user?.id) {
+      setIsLoadingFavorites(true);
+      try {
+        const { data, error } = await supabase
+          .from('favorites')
+          .select('yard_id')
+          .eq('user_id', session.user.id);
+
+        if (error) {
+          throw error;
+        }
+
+        setFavorites(data?.map(f => f.yard_id) || []);
+      } catch (error) {
+        console.error('Error loading favorites:', error);
+      } finally {
+        setIsLoadingFavorites(false);
+      }
+    }
+  };
+
+  // Handle favorite toggling
+  const handleFavoriteToggle = async (yardId: string) => {
+    if (!session?.user?.id) {
+      router.push('/auth/signin');
+      return;
+    }
+
+    try {
+      const isFavorited = favorites.includes(yardId);
+      if (isFavorited) {
+        await supabase
+          .from('favorites')
+          .delete()
+          .eq('user_id', session.user.id)
+          .eq('yard_id', yardId);
+        setFavorites(favorites.filter(id => id !== yardId));
+      } else {
+        await supabase
+          .from('favorites')
+          .insert({ user_id: session.user.id, yard_id: yardId });
+        setFavorites([...favorites, yardId]);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
+  };
+
+  // Set up real-time subscriptions
+  useEffect(() => {
+    // Initial data fetch
+    fetchYards();
+    loadFavorites();
+
+    // Subscribe to yards table changes
+    const yardsSubscription = supabase
+      .channel('yards_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'yards'
+        },
+        (payload) => {
+          console.log('Yards table change:', payload);
+          fetchYards(); // Refresh the yards list
+        }
+      )
+      .subscribe();
+
+    // Subscribe to favorites changes
+    const favoritesSubscription = supabase
+      .channel('favorites_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'favorites',
+          filter: `user_id=eq.${session?.user?.id}`
+        },
+        (payload) => {
+          console.log('Favorites change:', payload);
+          loadFavorites(); // Refresh favorites
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscriptions
+    return () => {
+      yardsSubscription.unsubscribe();
+      favoritesSubscription.unsubscribe();
+    };
+  }, [session?.user?.id]);
 
   // Add a new function for filtering yards
   const filterYards = async () => {
@@ -187,26 +274,6 @@ export default function Home() {
     }
   };
 
-  // Add a retry mechanism for initial load
-  useEffect(() => {
-    const loadYards = async () => {
-      try {
-        await fetchYards();
-      } catch (error) {
-        console.error('Initial fetch failed, retrying in 2 seconds...');
-        setTimeout(async () => {
-          try {
-            await fetchYards();
-          } catch (retryError) {
-            console.error('Retry also failed:', retryError);
-          }
-        }, 2000);
-      }
-    };
-    
-    loadYards();
-  }, []);
-
   // Update the filter handlers to use the new filterYards function
   const handleGuestChange = (event: any) => {
     setSelectedGuests(event.target.value);
@@ -230,61 +297,7 @@ export default function Home() {
   // Remove the client-side filtering since we're now using the API
   const filteredYards = yards;
 
-  // Load favorites when user is authenticated or when page loads
-  useEffect(() => {
-    const loadFavorites = async () => {
-      if (status === 'authenticated') {
-        try {
-          const response = await fetch('/api/favorites', {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            cache: 'no-store', // Prevent caching to ensure fresh data
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            setFavorites(data.yards.map((yard: Yard) => yard.id));
-          }
-        } catch (error) {
-          console.error('Error loading favorites:', error);
-        } finally {
-          setIsLoadingFavorites(false);
-        }
-      } else {
-        setIsLoadingFavorites(false);
-      }
-    };
-
-    loadFavorites();
-  }, [status]); // Re-run when auth status changes
-
-  const toggleFavorite = async (yardId: number) => {
-    if (status !== 'authenticated') {
-      router.push('/auth/signin');
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/favorites', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ yardId }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setFavorites(data.favorites);
-      }
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-    }
-  };
-
-  const handleYardClick = (yardId: number) => {
+  const handleYardClick = (yardId: string) => {
     router.push(`/yards/${yardId}`);
   };
 
@@ -319,14 +332,14 @@ export default function Home() {
         sx={{
           bgcolor: '#3A7D44',
           color: 'white',
-          py: { xs: 4, md: 8 },  // Reduced from 8/16 to 4/8
+          py: { xs: 4, md: 8 },
           px: { xs: 2, md: 4 },
           textAlign: 'center',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: { xs: '25vh', sm: '30vh', md: '60vh' },  // Reduced from 50/60/120vh to 25/30/60vh
+          minHeight: { xs: '25vh', sm: '30vh', md: '60vh' },
           position: 'relative',
         }}
       >
@@ -337,8 +350,8 @@ export default function Home() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: { xs: 2, md: 4 },  // Reduced gap
-            py: { xs: 2, md: 4 },  // Reduced padding
+            gap: { xs: 2, md: 4 },
+            py: { xs: 2, md: 4 },
           }}
         >
           <Box
@@ -353,7 +366,7 @@ export default function Home() {
               variant="h1"
               sx={{
                 fontWeight: 900,
-                fontSize: { xs: '2.2rem', sm: '3rem', md: '4.5rem' },  // Increased mobile size from 2rem to 2.2rem
+                fontSize: { xs: '2.2rem', sm: '3rem', md: '4.5rem' },
                 lineHeight: 1.2,
                 letterSpacing: '-0.02em',
                 textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
@@ -377,9 +390,9 @@ export default function Home() {
                 '&:hover': {
                   bgcolor: 'rgba(255, 255, 255, 0.9)',
                 },
-                px: { xs: 5, md: 6.5 },  // Increased from 4,5.3 to 5,6.5
-                py: { xs: 1.5, md: 2.3 },  // Increased from 1.3,2 to 1.5,2.3
-                fontSize: { xs: '1rem', md: '1.1rem' },  // Increased from 0.8,0.93 to 1,1.1
+                px: { xs: 5, md: 6.5 },
+                py: { xs: 1.5, md: 2.3 },
+                fontSize: { xs: '1rem', md: '1.1rem' },
                 fontWeight: 'bold',
                 borderRadius: '50px',
                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
@@ -390,13 +403,13 @@ export default function Home() {
             </Button>
           </Box>
           
-          {/* New Search Bar */}
+          {/* Search Bar */}
           <Box 
             sx={{ 
               width: '100%', 
               maxWidth: 900, 
               mx: 'auto',
-              mt: { xs: 1, md: 2 },  // Reduced margin top from 2/4 to 1/2
+              mt: { xs: 1, md: 2 },
             }}
           >
             <SearchBar />
@@ -404,180 +417,51 @@ export default function Home() {
         </Container>
       </Box>
 
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* Interactive Map Section */}
+      <Container maxWidth="xl" sx={{ py: 8 }}>
+        {/* Map Section */}
         <Box sx={{ mb: 6 }}>
-          <Typography 
-            variant="h4" 
-            component="h2" 
-            sx={{ 
-              mb: 3, 
-              color: '#3A7D44',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-            }}
-          >
+          <Typography variant="h4" gutterBottom sx={{ color: '#3A7D44' }}>
             Explore Yards Near You
           </Typography>
-          <YardMap 
-            yards={filteredYards} 
-            onMarkerClick={(yardId) => router.push(`/yards/${yardId}`)}
+          <YardMap
+            yards={yards}
+            onMarkerClick={(id) => router.push(`/yards/${id}`)}
           />
         </Box>
 
         {/* Featured Yards Section */}
-        <Typography 
-          variant="h4" 
-          component="h2" 
-          sx={{ 
-            mb: 3, 
-            color: '#3A7D44',
-            fontWeight: 'bold',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-          }}
-        >
-          Featured Yards
-        </Typography>
-
-        {/* Yard Listings */}
-        <Grid container spacing={4}>
-          {loading ? (
-            // Loading state
-            Array.from({ length: 3 }).map((_, index) => (
-              <Grid item key={index} xs={12} sm={6} md={4}>
-                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                  <Skeleton variant="rectangular" height={200} />
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Skeleton variant="text" height={32} />
-                    <Skeleton variant="text" height={24} />
-                    <Skeleton variant="text" height={24} />
-                  </CardContent>
-                </Card>
+        <Box sx={{ mt: 8, mb: 4 }}>
+          <Typography 
+            variant="h1" 
+            sx={{ 
+              fontSize: { xs: '2rem', sm: '2.5rem' },
+              fontWeight: 600,
+              mb: 4,
+              textAlign: 'center',
+              color: 'text.primary'
+            }}
+          >
+            Featured Yards
+          </Typography>
+          <Grid container spacing={4}>
+            {yards.map((yard) => (
+              <Grid item xs={12} sm={6} md={4} key={yard.id}>
+                <YardCard
+                  id={yard.id}
+                  title={yard.name}
+                  description={yard.description}
+                  price={yard.price}
+                  image={yard.image_url}
+                  amenities={yard.amenities || []}
+                  city={yard.city || ''}
+                  guest_limit={yard.guest_limit || 'Up to 10 guests'}
+                  isFavorite={favorites.includes(yard.id)}
+                  onFavoriteToggle={() => handleFavoriteToggle(yard.id)}
+                />
               </Grid>
-            ))
-          ) : error ? (
-            // Error state
-            <Grid item xs={12}>
-              <Alert severity="error" sx={{ mt: 2 }}>
-                {error}
-              </Alert>
-            </Grid>
-          ) : filteredYards.length === 0 ? (
-            // Empty state
-            <Grid item xs={12}>
-              <Alert severity="info" sx={{ mt: 2 }}>
-                No yards found. Try adjusting your search filters.
-              </Alert>
-            </Grid>
-          ) : (
-            // Success state
-            filteredYards.map((yard) => (
-              <Grid item key={yard.id} xs={12} sm={6} md={4}>
-                <Card
-                  sx={{
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    position: 'relative',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      transition: 'transform 0.2s ease-in-out',
-                      boxShadow: 3
-                    }
-                  }}
-                >
-                  <Box sx={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <IconButton
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(yard.id);
-                      }}
-                      sx={{
-                        position: 'absolute',
-                        top: 8,
-                        left: 8,
-                        bgcolor: 'rgba(255, 255, 255, 0.8)',
-                        '&:hover': {
-                          bgcolor: 'rgba(255, 255, 255, 0.9)',
-                        },
-                        zIndex: 3,
-                      }}
-                    >
-                      {favorites.includes(yard.id) ? (
-                        <Favorite sx={{ color: '#3A7D44' }} />
-                      ) : (
-                        <FavoriteBorder sx={{ color: '#3A7D44' }} />
-                      )}
-                    </IconButton>
-                    <CardMedia
-                      component="img"
-                      height="200"
-                      image={yard.image}
-                      alt={yard.title}
-                    />
-                    <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                      <Box>
-                        <Typography gutterBottom variant="h6" component="h2">
-                          {yard.title}
-                        </Typography>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                          <Chip 
-                            label={`Up to ${yard.guests} guests`}
-                            size="small"
-                            sx={{ bgcolor: '#FFD166', color: '#3A7D44' }}
-                          />
-                          {yard.amenities.slice(0, 3).map((amenity) => (
-                            <Chip
-                              key={amenity}
-                              label={amenity}
-                              size="small"
-                              sx={{ bgcolor: 'rgba(58, 125, 68, 0.1)', color: '#3A7D44' }}
-                            />
-                          ))}
-                          {yard.amenities.length > 3 && (
-                            <Chip
-                              label={`+${yard.amenities.length - 3} more`}
-                              size="small"
-                              sx={{ bgcolor: 'rgba(58, 125, 68, 0.1)', color: '#3A7D44' }}
-                            />
-                          )}
-                        </Box>
-                      </Box>
-                      <Box sx={{ mt: 'auto' }}>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                          {yard.city}
-                        </Typography>
-                        <Typography variant="h6" color="primary" gutterBottom>
-                          ${yard.price}/hour
-                        </Typography>
-                        <Button
-                          variant="contained"
-                          fullWidth
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/yards/${yard.id}/book`);
-                          }}
-                          sx={{
-                            bgcolor: '#3A7D44',
-                            '&:hover': {
-                              bgcolor: '#2D5F35',
-                            },
-                          }}
-                        >
-                          Book Now
-                        </Button>
-                      </Box>
-                    </CardContent>
-                  </Box>
-                </Card>
-              </Grid>
-            ))
-          )}
-        </Grid>
+            ))}
+          </Grid>
+        </Box>
       </Container>
     </Box>
   );

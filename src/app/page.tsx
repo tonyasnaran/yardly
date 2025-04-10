@@ -177,13 +177,46 @@ export default function Home() {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'yards'
         },
         (payload) => {
-          console.log('Yards table change:', payload);
-          fetchYards(); // Refresh the yards list
+          console.log('New yard added:', payload);
+          // Prepend new yard to the list
+          setYards(currentYards => [payload.new as YardData, ...currentYards]);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'yards'
+        },
+        (payload) => {
+          console.log('Yard updated:', payload);
+          // Update the yard in place
+          setYards(currentYards => 
+            currentYards.map(yard => 
+              yard.id === payload.new.id ? payload.new as YardData : yard
+            )
+          );
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'yards'
+        },
+        (payload) => {
+          console.log('Yard deleted:', payload);
+          // Remove the yard from the list
+          setYards(currentYards => 
+            currentYards.filter(yard => yard.id !== payload.old.id)
+          );
         }
       )
       .subscribe();

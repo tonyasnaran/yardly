@@ -42,6 +42,8 @@ interface Yard {
   description: string;
   reviews: number;
   nearbyAttractions: string[];
+  lat: number;
+  lng: number;
 }
 
 function LoadingFallback() {
@@ -217,6 +219,17 @@ function YardResultsContent() {
 
     setFilteredYards(filtered);
   };
+
+  // Transform yards for the map
+  const mapYards = yards.map(yard => ({
+    id: yard.id.toString(),
+    name: yard.title,
+    price: yard.price,
+    image_url: yard.image,
+    city: yard.city,
+    lat: yard.lat,
+    lng: yard.lng
+  }));
 
   if (loading) {
     return (
@@ -395,7 +408,7 @@ function YardResultsContent() {
       {/* Map Section */}
       <Box mt={4} mb={6}>
         <YardMap
-          yards={yards}
+          yards={mapYards}
           onBoundsChanged={handleBoundsChanged}
           onMapLoaded={setMapInstance}
         />

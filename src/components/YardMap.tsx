@@ -37,13 +37,13 @@ export interface MapBounds {
 
 interface YardMapProps {
   yards: Array<{
-    id: string;
+    id: string | number;
     name: string;
     price: number;
     image_url: string;
-    city?: string;
-    lat?: number;
-    lng?: number;
+    city: string;
+    lat: number;
+    lng: number;
   }>;
   onMarkerClick?: (id: string) => void;
   onBoundsChanged?: (bounds: MapBounds) => void;
@@ -246,11 +246,11 @@ export default function YardMap({
   }, []);
 
   // Handle favorite toggle
-  const handleFavoriteToggle = async (yardId: string, event: MouseEvent) => {
-    event.stopPropagation();
-    if (!supabase) return;
-
+  const handleFavoriteToggle = async (yardId: string | number) => {
     try {
+      const id = typeof yardId === 'string' ? parseInt(yardId) : yardId;
+      if (!supabase) return;
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
         // Redirect to sign in or show sign in modal
@@ -258,18 +258,18 @@ export default function YardMap({
       }
 
       const newFavorites = new Set(favorites);
-      if (newFavorites.has(yardId)) {
+      if (newFavorites.has(id.toString())) {
         await supabase
           .from('favorites')
           .delete()
           .eq('user_id', session.user.id)
-          .eq('yard_id', yardId);
-        newFavorites.delete(yardId);
+          .eq('yard_id', id);
+        newFavorites.delete(id.toString());
       } else {
         await supabase
           .from('favorites')
-          .insert([{ user_id: session.user.id, yard_id: yardId }]);
-        newFavorites.add(yardId);
+          .insert([{ user_id: session.user.id, yard_id: id }]);
+        newFavorites.add(id.toString());
       }
       setFavorites(newFavorites);
     } catch (error) {
@@ -282,7 +282,7 @@ export default function YardMap({
     const content = document.createElement('div');
     content.className = 'yard-info-window';
     content.innerHTML = `
-      <div style="width: 300px;">
+      <div style="width: 300px; cursor: pointer;">
         <div style="position: relative;">
           <div style="width: 100%; height: 200px; overflow: hidden;">
             <img 
@@ -299,13 +299,36 @@ export default function YardMap({
           <div style="font-size: 18px; font-weight: 600; color: #3A7D44;">
             $${yard.price}/hour
           </div>
+          <button style="
+            width: 100%;
+            margin-top: 12px;
+            padding: 8px 16px;
+            background-color: #3A7D44;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+          ">
+            Book Now
+          </button>
         </div>
       </div>
     `;
 
-    // Add click handler for the content
+    // Add click handler for the entire content
     content.addEventListener('click', () => {
-      router.push(`/yards/${yard.id}`);
+      router.push(`/yards/${yard.id}/book`);
+    });
+
+    // Add hover handlers
+    content.addEventListener('mouseenter', () => {
+      content.style.opacity = '0.95';
+    });
+
+    content.addEventListener('mouseleave', () => {
+      content.style.opacity = '1';
     });
 
     return content;
@@ -346,10 +369,16 @@ export default function YardMap({
     const initializeMap = async () => {
       try {
         setIsLoading(true);
+        console.log('Loading Google Maps...');
         await loader.load();
+        console.log('Google Maps loaded successfully');
         
-        if (!mapRef.current) return;
+        if (!mapRef.current) {
+          console.error('Map ref is not available');
+          return;
+        }
 
+        console.log('Creating map instance...');
         const mapInstance = new google.maps.Map(mapRef.current, {
           center: { lat: 34.0522, lng: -118.2437 }, // Los Angeles
           zoom: 10,
@@ -363,6 +392,7 @@ export default function YardMap({
           },
           gestureHandling: 'cooperative',
         });
+        console.log('Map instance created successfully');
 
         setMap(mapInstance);
         if (onMapLoaded) {
@@ -400,30 +430,55 @@ export default function YardMap({
   }, [onMapLoaded, onBoundsChanged]);
 
   useEffect(() => {
-    if (!map) return;
+    if (!map) {
+      console.log('Map not initialized yet');
+      return;
+    }
+
+    console.log('Creating markers for yards:', yards);
 
     // Clear existing markers
     markers.forEach(marker => marker.setMap(null));
 
     // Filter yards with valid coordinates
     const validYards = yards.filter(yard => yard.lat != null && yard.lng != null);
+    console.log('Valid yards with coordinates:', validYards);
 
     // Create new markers
     const newMarkers = validYards.map(yard => {
+      console.log('Creating marker for yard:', yard);
+      
+      // Check for overlapping coordinates
+      const overlappingYard = validYards.find(
+        other => other.id !== yard.id && 
+        Math.abs(other.lat - yard.lat) < 0.0001 && 
+        Math.abs(other.lng - yard.lng) < 0.0001
+      );
+
+      // If overlapping, slightly offset the position
+      const position = overlappingYard ? {
+        lat: yard.lat! + 0.0015, // Offset by about 150 meters
+        lng: yard.lng! + 0.0015
+      } : {
+        lat: yard.lat!,
+        lng: yard.lng!
+      };
+
       const marker = new google.maps.Marker({
-        position: { lat: yard.lat!, lng: yard.lng! },
+        position,
         map,
         title: yard.name,
         icon: {
           path: MARKER_PATH,
-          fillColor: '#3A7D44',
+          fillColor: '#3A7D44', // Yardly green for all markers
           fillOpacity: 1,
           strokeColor: '#FFFFFF',
           strokeWeight: 2,
           scale: 2,
           anchor: new google.maps.Point(12, 24),
-        },
+        }
       });
+      console.log('Marker created for:', yard.name, 'at position:', position);
 
       let hoverTimeout: NodeJS.Timeout | null = null;
       let isInfoWindowOpen = false;
@@ -451,38 +506,29 @@ export default function YardMap({
         }
 
         // Close any existing info window
-        if (activeInfoWindow) {
+        if (activeInfoWindow && activeInfoWindow !== infoWindow) {
           activeInfoWindow.close();
         }
 
-        // Open new info window
-        infoWindow.setContent(createInfoWindowContent(yard));
-        infoWindow.open(map, marker);
-        setActiveInfoWindow(infoWindow);
-        isInfoWindowOpen = true;
+        // Only open if not already open
+        if (!isInfoWindowOpen) {
+          infoWindow.setContent(createInfoWindowContent(yard));
+          infoWindow.open(map, marker);
+          setActiveInfoWindow(infoWindow);
+          isInfoWindowOpen = true;
+        }
       });
 
       marker.addListener('mouseout', () => {
         mouseOnMarker = false;
-        // Set timeout to close info window after 300ms
-        hoverTimeout = setTimeout(closeInfoWindow, 300);
+        // Only start close timeout if not hovering over info window
+        if (!mouseOnInfoWindow) {
+          hoverTimeout = setTimeout(closeInfoWindow, 300);
+        }
       });
 
       marker.addListener('click', () => {
-        // Clear hover timeout on click
-        if (hoverTimeout) {
-          clearTimeout(hoverTimeout);
-          hoverTimeout = null;
-        }
-
-        infoWindow.close();
-        infoWindow.setContent(createInfoWindowContent(yard));
-        infoWindow.open(map, marker);
-        setActiveInfoWindow(infoWindow);
-        isInfoWindowOpen = true;
-        if (onMarkerClick) {
-          onMarkerClick(yard.id);
-        }
+        router.push(`/yards/${yard.id}/book`);
       });
 
       // Add event listener for InfoWindow DOM ready
@@ -496,9 +542,12 @@ export default function YardMap({
               hoverTimeout = null;
             }
           });
+          
           container.addEventListener('mouseleave', () => {
             mouseOnInfoWindow = false;
-            hoverTimeout = setTimeout(closeInfoWindow, 300);
+            if (!mouseOnMarker) {
+              hoverTimeout = setTimeout(closeInfoWindow, 300);
+            }
           });
         }
       });
@@ -507,14 +556,18 @@ export default function YardMap({
     });
 
     setMarkers(newMarkers);
+    console.log('New markers set:', newMarkers.length);
 
     // If we have valid yards, fit bounds to include all markers
     if (validYards.length > 0) {
+      console.log('Fitting bounds to markers');
       const bounds = new google.maps.LatLngBounds();
       validYards.forEach(yard => {
         bounds.extend({ lat: yard.lat!, lng: yard.lng! });
       });
       map.fitBounds(bounds);
+    } else {
+      console.log('No valid yards to fit bounds');
     }
   }, [map, yards, onMarkerClick]);
 

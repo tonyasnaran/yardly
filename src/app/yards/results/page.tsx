@@ -64,8 +64,8 @@ async function fetchYards(params: { [key: string]: string }) {
 }
 
 function YardResultsContent() {
-  const searchParams = useSearchParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, status } = useSession();
   const [yards, setYards] = useState<Yard[]>([]);
   const [filteredYards, setFilteredYards] = useState<Yard[]>([]);
@@ -221,7 +221,7 @@ function YardResultsContent() {
   };
 
   // Transform yards for the map
-  const mapYards = yards.map(yard => ({
+  const mapYards = yards?.length ? yards.map(yard => ({
     id: yard.id.toString(),
     name: yard.title,
     price: yard.price,
@@ -229,7 +229,7 @@ function YardResultsContent() {
     city: yard.city,
     lat: yard.lat,
     lng: yard.lng
-  }));
+  })) : [];
 
   if (loading) {
     return (

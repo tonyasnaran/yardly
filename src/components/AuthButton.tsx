@@ -94,6 +94,9 @@ export default function AuthButton() {
         <MenuItem onClick={() => handleMenuItemClick('/list-your-yard')}>
           List Your Yard
         </MenuItem>
+        <MenuItem onClick={() => handleMenuItemClick('/host-dashboard')}>
+          Host Dashboard
+        </MenuItem>
         <MenuItem onClick={handleSignOut}>
           Sign Out
         </MenuItem>

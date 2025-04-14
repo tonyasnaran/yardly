@@ -18,6 +18,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { useRouter } from 'next/navigation';
 import DatePickerProvider from './DatePickerProvider';
+import { format } from 'date-fns';
 
 const GUEST_OPTIONS = [
   'Up to 10 Guests',
@@ -49,6 +50,7 @@ export default function SearchBar() {
   const [guests, setGuests] = useState(GUEST_OPTIONS[0]);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [placesLoaded, setPlacesLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const autocompleteRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -126,6 +128,7 @@ export default function SearchBar() {
             const place = e.detail;
             if (place?.formatted_address) {
               setCity(place.formatted_address);
+              setError(null);
             }
           });
         }
@@ -146,12 +149,48 @@ export default function SearchBar() {
     setAnchorEl(null);
   };
 
+  const validateDates = () => {
+    if (!checkIn || !checkOut) {
+      setError('Please select both check-in and check-out times');
+      return false;
+    }
+
+    if (checkIn >= checkOut) {
+      setError('Check-out time must be after check-in time');
+      return false;
+    }
+
+    const minDuration = 1000 * 60 * 60; // 1 hour in milliseconds
+    if (checkOut.getTime() - checkIn.getTime() < minDuration) {
+      setError('Booking must be at least 1 hour');
+      return false;
+    }
+
+    const maxDuration = 1000 * 60 * 60 * 24; // 24 hours in milliseconds
+    if (checkOut.getTime() - checkIn.getTime() > maxDuration) {
+      setError('Booking cannot exceed 24 hours');
+      return false;
+    }
+
+    setError(null);
+    return true;
+  };
+
   const handleSearch = () => {
+    if (!city) {
+      setError('Please select a location');
+      return;
+    }
+
+    if (!validateDates()) {
+      return;
+    }
+
     const params = new URLSearchParams();
-    if (city) params.append('city', city);
-    if (checkIn) params.append('checkIn', checkIn.toISOString());
-    if (checkOut) params.append('checkOut', checkOut.toISOString());
-    if (guests) params.append('guests', guests.split(' ')[2]); // Extract number from "Up to X Guests"
+    params.append('city', city);
+    params.append('checkIn', checkIn!.toISOString());
+    params.append('checkOut', checkOut!.toISOString());
+    params.append('guests', guests.split(' ')[2]); // Extract number from "Up to X Guests"
 
     router.push(`/yards/results?${params.toString()}`);
   };
@@ -161,6 +200,10 @@ export default function SearchBar() {
   return (
     <Paper
       component="form"
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleSearch();
+      }}
       sx={{
         display: 'flex',
         flexDirection: { xs: 'column', md: 'row' },
@@ -232,8 +275,12 @@ export default function SearchBar() {
           </Typography>
           <DateTimePicker
             value={checkIn}
-            onChange={(newValue) => setCheckIn(newValue)}
+            onChange={(newValue) => {
+              setCheckIn(newValue);
+              setError(null);
+            }}
             format="MMM d, h:mm a"
+            minDate={new Date()}
             slotProps={{
               textField: {
                 variant: 'standard',
@@ -264,8 +311,12 @@ export default function SearchBar() {
           </Typography>
           <DateTimePicker
             value={checkOut}
-            onChange={(newValue) => setCheckOut(newValue)}
+            onChange={(newValue) => {
+              setCheckOut(newValue);
+              setError(null);
+            }}
             format="MMM d, h:mm a"
+            minDate={checkIn || new Date()}
             slotProps={{
               textField: {
                 variant: 'standard',
@@ -280,7 +331,6 @@ export default function SearchBar() {
         </Box>
       </DatePickerProvider>
 
-      <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', md: 'block' } }} />
       <Divider sx={{ display: { xs: 'block', md: 'none' } }} />
 
       <Box
@@ -345,22 +395,48 @@ export default function SearchBar() {
         </Popover>
       </Box>
 
-      <Button
-        variant="contained"
-        onClick={handleSearch}
+      <Box
         sx={{
-          minWidth: { xs: '100%', md: '60px' },
-          height: '48px',
-          borderRadius: '24px',
-          backgroundColor: '#3A7D44',
-          '&:hover': {
-            backgroundColor: '#2D5F35',
-          },
-          ml: { xs: 0, md: 2 },
+          display: 'flex',
+          alignItems: 'center',
+          px: { xs: 2, md: 1 },
+          py: { xs: 1, md: 0 },
         }}
       >
-        <SearchIcon />
-      </Button>
+        <Button
+          variant="contained"
+          onClick={handleSearch}
+          startIcon={<SearchIcon />}
+          sx={{
+            width: '100%',
+            height: 48,
+            borderRadius: '24px',
+            backgroundColor: '#3A7D44',
+            '&:hover': {
+              backgroundColor: '#2D5F35',
+            },
+            px: { xs: 4, md: 3 },
+          }}
+        >
+          Search
+        </Button>
+      </Box>
+
+      {error && (
+        <Typography
+          color="error"
+          sx={{
+            position: 'absolute',
+            bottom: -30,
+            left: 0,
+            width: '100%',
+            textAlign: 'center',
+            fontSize: '0.875rem',
+          }}
+        >
+          {error}
+        </Typography>
+      )}
     </Paper>
   );
 } 

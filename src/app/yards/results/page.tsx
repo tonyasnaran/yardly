@@ -63,7 +63,7 @@ async function fetchYards(params: { [key: string]: string }) {
   return response.json();
 }
 
-function YardResultsContent() {
+function YardResultsContent(): JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
@@ -77,32 +77,42 @@ function YardResultsContent() {
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
 
   // Function to format the search summary
-  const formatSearchSummary = (city: string, checkIn: string | null, checkOut: string | null, guests: string) => {
-    let summary = [];
+  const formatSearchSummary = useCallback(() => {
+    const city = searchParams.get('city');
+    const checkIn = searchParams.get('checkIn');
+    const checkOut = searchParams.get('checkOut');
+    const guests = searchParams.get('guests');
 
-    // Add city if present
-    if (city) {
-      summary.push(city);
+    if (!city || !checkIn || !checkOut || !guests) {
+      return '';
     }
 
-    // Add date and time range if present
-    if (checkIn && checkOut) {
-      try {
-        const checkInDate = parseISO(checkIn);
-        const checkOutDate = parseISO(checkOut);
-        const dateTimeRange = `${format(checkInDate, 'MMMM d')}, ${format(checkInDate, 'h:mm a')} to ${format(checkOutDate, 'h:mm a')}`;
-        summary.push(dateTimeRange);
-      } catch (error) {
-        console.error('Error parsing dates:', error);
-      }
+    let summary = [];
+
+    // Add city
+    summary.push(city);
+
+    // Add date and time range
+    try {
+      const checkInDate = parseISO(checkIn);
+      const checkOutDate = parseISO(checkOut);
+      const dateTimeRange = `${format(checkInDate, 'MMMM d')}, ${format(checkInDate, 'h:mm a')} to ${format(checkOutDate, 'h:mm a')}`;
+      summary.push(dateTimeRange);
+    } catch (error) {
+      console.error('Error parsing dates:', error);
     }
 
     // Add guest limit
-    const guestText = `Up to ${guests} Guests`;
-    summary.push(guestText);
+    summary.push(`Up to ${guests} Guests`);
 
     return summary.join(' | ');
-  };
+  }, [searchParams]);
+
+  // Update search summary when search params change
+  useEffect(() => {
+    const summary = formatSearchSummary();
+    setSearchSummary(summary);
+  }, [formatSearchSummary]);
 
   const updateYards = useCallback(async (params: { [key: string]: string }) => {
     try {

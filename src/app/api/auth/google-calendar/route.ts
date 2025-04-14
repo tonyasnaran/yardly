@@ -20,6 +20,18 @@ const SCOPES = [
 
 export async function GET() {
   try {
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+
+    // Check authentication first
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+      return NextResponse.json(
+        { error: 'Not authenticated' },
+        { status: 401 }
+      );
+    }
+
     // Generate a random state parameter
     const state = randomBytes(32).toString('hex');
 
@@ -27,7 +39,7 @@ export async function GET() {
       access_type: 'offline',
       scope: SCOPES,
       prompt: 'consent',
-      state: state, // Add state parameter
+      state: state,
     });
 
     return NextResponse.json({ url: authUrl });
@@ -45,15 +57,21 @@ export async function POST(request: Request) {
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     
-    // Get the current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      throw new Error('Not authenticated');
+    // Check authentication first
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+      return NextResponse.json(
+        { error: 'Not authenticated' },
+        { status: 401 }
+      );
     }
 
     const { code } = await request.json();
     if (!code) {
-      throw new Error('No authorization code provided');
+      return NextResponse.json(
+        { error: 'No authorization code provided' },
+        { status: 400 }
+      );
     }
 
     // Exchange the code for tokens
@@ -61,14 +79,14 @@ export async function POST(request: Request) {
     oauth2Client.setCredentials(tokens);
 
     // Store the tokens in Supabase user metadata
-    const { error } = await supabase.auth.updateUser({
+    const { error: updateError } = await supabase.auth.updateUser({
       data: {
         google_calendar_tokens: tokens,
       },
     });
 
-    if (error) {
-      throw error;
+    if (updateError) {
+      throw updateError;
     }
 
     return NextResponse.json({ success: true });

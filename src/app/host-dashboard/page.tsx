@@ -67,11 +67,21 @@ function DashboardContent() {
   const handleConnectCalendar = async () => {
     try {
       const response = await fetch('/api/auth/google-calendar');
-      const { url } = await response.json();
-      window.location.href = url;
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to connect Google Calendar');
+      }
+      const data = await response.json();
+      if (!data.url) {
+        throw new Error('No authentication URL received');
+      }
+      window.location.href = data.url;
     } catch (error) {
       console.error('Error connecting calendar:', error);
-      setSyncMessage({ type: 'error', text: 'Failed to connect Google Calendar' });
+      setSyncMessage({ 
+        type: 'error', 
+        text: error instanceof Error ? error.message : 'Failed to connect Google Calendar' 
+      });
     }
   };
 

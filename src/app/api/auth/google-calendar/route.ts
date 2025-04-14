@@ -6,6 +6,22 @@ import { randomBytes } from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
+// Make sure we have all required environment variables
+const requiredEnvVars = {
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+  NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
+};
+
+// Check for missing environment variables
+const missingVars = Object.entries(requiredEnvVars)
+  .filter(([_, value]) => !value)
+  .map(([key]) => key);
+
+if (missingVars.length > 0) {
+  throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`);
+}
+
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
@@ -42,11 +58,17 @@ export async function GET() {
       state: state,
     });
 
+    if (!authUrl) {
+      throw new Error('Failed to generate authentication URL');
+    }
+
+    console.log('Generated auth URL:', authUrl); // Add logging
+
     return NextResponse.json({ url: authUrl });
   } catch (error) {
     console.error('Error generating auth URL:', error);
     return NextResponse.json(
-      { error: 'Failed to generate authentication URL' },
+      { error: error instanceof Error ? error.message : 'Failed to generate authentication URL' },
       { status: 500 }
     );
   }

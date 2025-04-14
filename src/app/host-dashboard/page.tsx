@@ -63,6 +63,7 @@ function TabPanel(props: TabPanelProps) {
 function DashboardContent() {
   const searchParams = useSearchParams();
   const supabase = createClientComponentClient();
+  const { data: session } = useSession();
   const [isCalendarConnected, setIsCalendarConnected] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -126,25 +127,48 @@ function DashboardContent() {
     setAnchorEl(null);
   };
 
-  // Calendar connection logic (existing code)...
   useEffect(() => {
     const checkCalendarConnection = async () => {
       try {
+        // First try NextAuth session
+        if (session?.user) {
+          const response = await fetch('/api/auth/google-calendar/status', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to check calendar status');
+          }
+
+          const data = await response.json();
+          setIsCalendarConnected(data.isConnected);
+          return;
+        }
+
+        // Fallback to Supabase
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('Not authenticated');
+        if (!user) {
+          throw new Error('Not authenticated');
+        }
         
         setIsCalendarConnected(!!user.user_metadata?.google_calendar_tokens);
       } catch (error) {
         console.error('Error checking calendar connection:', error);
         setSyncMessage({ 
           type: 'error', 
-          text: 'Failed to check calendar connection status' 
+          text: 'Failed to check calendar connection status. Please try refreshing the page.' 
         });
       }
     };
 
-    checkCalendarConnection();
-  }, [supabase.auth]);
+    // Only check calendar connection if we have a session
+    if (session?.user || supabase) {
+      checkCalendarConnection();
+    }
+  }, [session, supabase]);
 
   useEffect(() => {
     const calendar = searchParams.get('calendar');
@@ -160,8 +184,33 @@ function DashboardContent() {
 
   const handleConnectCalendar = async () => {
     try {
+      // First try NextAuth session
+      if (session?.user) {
+        const response = await fetch('/api/auth/google-calendar', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to connect Google Calendar');
+        }
+
+        const data = await response.json();
+        if (!data.url) {
+          throw new Error('No authentication URL received');
+        }
+        window.location.href = data.url;
+        return;
+      }
+
+      // Fallback to Supabase
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Please sign in to connect your calendar');
+      if (!user) {
+        throw new Error('Please sign in to connect your calendar');
+      }
 
       const response = await fetch('/api/auth/google-calendar');
       if (!response.ok) {
@@ -185,6 +234,32 @@ function DashboardContent() {
   const handleSyncCalendar = async () => {
     try {
       setIsSyncing(true);
+      
+      // First try NextAuth session
+      if (session?.user) {
+        const response = await fetch('/api/calendar/sync', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+
+        setSyncMessage({ 
+          type: 'success', 
+          text: `Successfully synced ${data.addedEvents.length} bookings to Google Calendar` 
+        });
+        return;
+      }
+
+      // Fallback to Supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Please sign in to sync your calendar');
+      }
+
       const response = await fetch('/api/calendar/sync', {
         method: 'POST',
       });

@@ -491,6 +491,7 @@ export const dynamic = 'force-dynamic';
 
 export default function HostDashboard() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const supabase = createClientComponentClient();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
@@ -498,12 +499,22 @@ export default function HostDashboard() {
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (error || !user) {
-          router.push('/auth/signin');
-        } else {
-          setUser(user);
+        // Check NextAuth session first
+        if (status === 'authenticated' && session?.user) {
+          setUser(session.user);
+          setLoading(false);
+          return;
         }
+
+        // Fallback to Supabase session
+        const { data: { user: supabaseUser }, error } = await supabase.auth.getUser();
+        if (error || !supabaseUser) {
+          console.error('No authenticated user found');
+          router.push('/auth/signin');
+          return;
+        }
+
+        setUser(supabaseUser);
       } catch (error) {
         console.error('Error checking authentication:', error);
         router.push('/auth/signin');
@@ -513,7 +524,7 @@ export default function HostDashboard() {
     };
 
     checkUser();
-  }, [router, supabase.auth]);
+  }, [router, supabase.auth, session, status]);
 
   if (loading) {
     return (
@@ -524,6 +535,7 @@ export default function HostDashboard() {
   }
 
   if (!user) {
+    router.push('/auth/signin');
     return null;
   }
 
@@ -531,7 +543,7 @@ export default function HostDashboard() {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Welcome back{user.user_metadata?.full_name ? `, ${user.user_metadata.full_name}` : ''}
+          Welcome back{user.user_metadata?.full_name || user.name ? `, ${user.user_metadata?.full_name || user.name}` : ''}
         </Typography>
         <Typography variant="body1" color="text.secondary">
           Manage your yards, bookings, and calendar all in one place.

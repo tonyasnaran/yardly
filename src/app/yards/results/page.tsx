@@ -27,23 +27,20 @@ import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
 import Favorite from '@mui/icons-material/Favorite';
 import { format, parseISO } from 'date-fns';
 import YardCard from '@/components/YardCard';
-import YardMap from '@/components/YardMap';
-import { MapBounds } from '@/components/YardMap';
+import { supabase } from '@/lib/supabase';
 
 interface Yard {
   id: number;
   title: string;
   city: string;
   price: number;
-  guests: number;
+  guest_limit: string;
   image: string;
   amenities: string[];
   rating?: number;
   description: string;
   reviews: number;
   nearbyAttractions: string[];
-  lat: number;
-  lng: number;
 }
 
 function LoadingFallback() {
@@ -55,12 +52,45 @@ function LoadingFallback() {
 }
 
 async function fetchYards(params: { [key: string]: string }) {
-  const searchParams = new URLSearchParams(params);
-  const response = await fetch(`/api/yards/map?${searchParams.toString()}`);
-  if (!response.ok) {
+  const city = params.city || '';
+  const guests = parseInt(params.guests || '0');
+  const amenities = params.amenities ? JSON.parse(params.amenities) : [];
+
+  let query = supabase
+    .from('yards')
+    .select('*')
+    .ilike('city', `%${city}%`)
+    .gte('guest_limit', guests);
+
+  // Add amenity filters if any are selected
+  if (amenities.length > 0) {
+    amenities.forEach((amenity: string) => {
+      query = query.contains('amenities', [amenity]);
+    });
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
     throw new Error('Failed to fetch yards');
   }
-  return response.json();
+
+  // Transform Supabase data to match Yard interface
+  const yards = data.map((yard: any) => ({
+    id: yard.id,
+    title: yard.title || yard.name,
+    city: yard.city,
+    price: yard.price_per_night || yard.price,
+    guest_limit: yard.guest_limit || 'Up to 15 guests',
+    image: yard.images?.[0] || yard.image_url || '/placeholder.jpg',
+    amenities: yard.amenities || [],
+    rating: yard.rating,
+    description: yard.description,
+    reviews: yard.reviews_count || 0,
+    nearbyAttractions: yard.nearby_attractions || []
+  }));
+
+  return { yards };
 }
 
 function YardResultsContent(): JSX.Element {
@@ -74,7 +104,8 @@ function YardResultsContent(): JSX.Element {
   const [favorites, setFavorites] = useState<number[]>([]);
   const [isLoadingFavorites, setIsLoadingFavorites] = useState(true);
   const [searchSummary, setSearchSummary] = useState('');
-  const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [availableAmenities, setAvailableAmenities] = useState<string[]>([]);
 
   // Function to format the search summary
   const formatSearchSummary = useCallback(() => {
@@ -114,39 +145,56 @@ function YardResultsContent(): JSX.Element {
     setSearchSummary(summary);
   }, [formatSearchSummary]);
 
-  const updateYards = useCallback(async (params: { [key: string]: string }) => {
-    try {
-      setLoading(true);
-      const { yards: newYards } = await fetchYards(params);
-      setYards(newYards);
-    } catch (error) {
-      console.error('Error fetching yards:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Get available amenities from all yards
+  const getAvailableAmenities = (yards: Yard[]) => {
+    const amenities = new Set<string>();
+    yards.forEach(yard => {
+      yard.amenities.forEach(amenity => amenities.add(amenity));
+    });
+    return Array.from(amenities);
+  };
 
-  // Initial fetch when search params change
   useEffect(() => {
-    const params: { [key: string]: string } = {};
-    searchParams.forEach((value, key) => {
-      params[key] = value;
-    });
-    updateYards(params);
-  }, [searchParams, updateYards]);
+    const loadYards = async () => {
+      try {
+        setLoading(true);
+        const params: { [key: string]: string } = {};
+        searchParams.forEach((value, key) => {
+          params[key] = value;
+        });
+        const { yards } = await fetchYards(params);
+        setYards(yards);
+        setFilteredYards(yards);
+        setAvailableAmenities(getAvailableAmenities(yards));
+        setSelectedAmenities(params.amenities ? JSON.parse(params.amenities) : []);
+      } catch (err) {
+        setError('Failed to load yards');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Handle map bounds updates
-  const handleBoundsChanged = useCallback((bounds: MapBounds) => {
-    const params: { [key: string]: string } = {};
+    loadYards();
+  }, [searchParams]);
+
+  const handleAmenityToggle = (amenity: string) => {
+    const newAmenities = selectedAmenities.includes(amenity)
+      ? selectedAmenities.filter(a => a !== amenity)
+      : [...selectedAmenities, amenity];
+
+    setSelectedAmenities(newAmenities);
+    
+    // Update URL with new filters
+    const newParams = new URLSearchParams();
     searchParams.forEach((value, key) => {
-      params[key] = value;
+      if (key !== 'amenities') {
+        newParams.set(key, value);
+      }
     });
-    params.north = bounds.north.toString();
-    params.south = bounds.south.toString();
-    params.east = bounds.east.toString();
-    params.west = bounds.west.toString();
-    updateYards(params);
-  }, [searchParams, updateYards]);
+    newParams.set('amenities', JSON.stringify(newAmenities));
+    window.history.pushState({}, '', `?${newParams.toString()}`);
+  };
 
   // Load favorites when user is authenticated
   useEffect(() => {
@@ -229,17 +277,6 @@ function YardResultsContent(): JSX.Element {
 
     setFilteredYards(filtered);
   };
-
-  // Transform yards for the map
-  const mapYards = yards?.length ? yards.map(yard => ({
-    id: yard.id.toString(),
-    name: yard.title,
-    price: yard.price,
-    image_url: yard.image,
-    city: yard.city,
-    lat: yard.lat,
-    lng: yard.lng
-  })) : [];
 
   if (loading) {
     return (
@@ -359,7 +396,7 @@ function YardResultsContent(): JSX.Element {
                             </Typography>
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1.5 }}>
                               <Chip 
-                                label={`Up to ${yard.guests} guests`}
+                                label={yard.guest_limit}
                                 size="small"
                                 sx={{ bgcolor: '#FFD166', color: '#3A7D44' }}
                               />
@@ -414,15 +451,6 @@ function YardResultsContent(): JSX.Element {
           </Grid>
         </Grid>
       </Container>
-
-      {/* Map Section */}
-      <Box mt={4} mb={6}>
-        <YardMap
-          yards={mapYards}
-          onBoundsChanged={handleBoundsChanged}
-          onMapLoaded={setMapInstance}
-        />
-      </Box>
     </Box>
   );
 }

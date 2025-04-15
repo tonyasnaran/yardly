@@ -317,15 +317,78 @@ function DashboardContent() {
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>Recent Reviews</Typography>
           <List>
-            {/* Sample reviews - you would fetch these from your backend */}
-            {[1, 2, 3].map((review) => (
-              <ListItem key={review} divider>
-                <ListItemText
-                  primary={`Guest Review ${review}`}
-                  secondary="Great experience! The yard was perfect for our event."
-                />
-              </ListItem>
-            ))}
+            <ListItem divider>
+              <ListItemText
+                primary={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Typography variant="subtitle1" component="span">
+                      Backyard Paradise
+                    </Typography>
+                    <Box sx={{ display: 'flex', color: 'warning.main' }}>
+                      {'★'.repeat(5)}
+                    </Box>
+                  </Box>
+                }
+                secondary={
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      "The space was absolutely perfect for our daughter's sweet sixteen! Sarah was incredibly accommodating with our setup needs, and the string lights created such a magical atmosphere in the evening. The built-in BBQ was a huge plus for our catering. Would definitely book again!"
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      - Jennifer Martinez, 3 days ago
+                    </Typography>
+                  </Box>
+                }
+              />
+            </ListItem>
+            <ListItem divider>
+              <ListItemText
+                primary={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Typography variant="subtitle1" component="span">
+                      Urban Oasis
+                    </Typography>
+                    <Box sx={{ display: 'flex', color: 'warning.main' }}>
+                      {'★'.repeat(4)}
+                    </Box>
+                  </Box>
+                }
+                secondary={
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      "What a fantastic spot for our team building event! The modern seating area and fire pit were perfect for our group discussions. The WiFi was reliable for our hybrid participants. Only minor feedback would be to add more shade options for hot afternoons."
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      - Michael Chen, 1 week ago
+                    </Typography>
+                  </Box>
+                }
+              />
+            </ListItem>
+            <ListItem>
+              <ListItemText
+                primary={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Typography variant="subtitle1" component="span">
+                      Garden Retreat
+                    </Typography>
+                    <Box sx={{ display: 'flex', color: 'warning.main' }}>
+                      {'★'.repeat(5)}
+                    </Box>
+                  </Box>
+                }
+                secondary={
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      "This garden space exceeded all our expectations for our small wedding ceremony! The rose garden provided a stunning backdrop for photos, and the koi pond added such a peaceful ambiance. The hosts even helped us arrange the chairs perfectly for the ceremony. It was truly a magical day!"
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      - Emily & David Thompson, 2 weeks ago
+                    </Typography>
+                  </Box>
+                }
+              />
+            </ListItem>
           </List>
         </Paper>
       </TabPanel>

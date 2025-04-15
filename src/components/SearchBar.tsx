@@ -51,7 +51,7 @@ export default function SearchBar() {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [placesLoaded, setPlacesLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const autocompleteRef = useRef<HTMLElement | null>(null);
+  const autocompleteRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleGoogleMapsReady = () => {
@@ -230,31 +230,28 @@ export default function SearchBar() {
         <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#222' }}>
           Where
         </Typography>
-        <div>
-          {!placesLoaded ? (
-            <InputBase
-              sx={{ 
-                flex: 1,
-                '& input': {
-                  py: 1,
-                  width: '100%',
-                }
-              }}
-              placeholder="Loading places..."
-              disabled
-              endAdornment={<CircularProgress size={20} />}
-            />
-          ) : (
-            <gmp-place-autocomplete
-              ref={autocompleteRef}
-              placeholder="Search cities"
-              style={{
-                width: '100%',
-                background: 'transparent',
-              }}
-            />
-          )}
-        </div>
+        <InputBase
+          inputRef={autocompleteRef}
+          placeholder="Search cities"
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+          sx={{
+            '& input': {
+              py: 1,
+              width: '100%',
+              border: 'none',
+              outline: 'none',
+              fontSize: 'inherit',
+              fontFamily: 'inherit',
+              color: 'inherit',
+              bgcolor: 'transparent',
+              '&::placeholder': {
+                color: '#757575',
+                opacity: 1,
+              },
+            },
+          }}
+        />
       </Box>
 
       <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', md: 'block' } }} />

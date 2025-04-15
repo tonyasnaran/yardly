@@ -30,9 +30,10 @@ import {
   MenuItem,
   Tooltip,
 } from '@mui/material';
-import { Event, Sync, MoreVert, TrendingUp, TrendingDown, AttachMoney } from '@mui/icons-material';
+import { TrendingUp, TrendingDown, AttachMoney, MoreVert } from '@mui/icons-material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import CustomCalendar from '@/components/CustomCalendar';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -51,11 +52,7 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box>{children}</Box>}
     </div>
   );
 }
@@ -64,10 +61,6 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const supabase = createClientComponentClient();
   const { data: session } = useSession();
-  const [isCalendarConnected, setIsCalendarConnected] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncMessage, setSyncMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [showConnectDialog, setShowConnectDialog] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [performanceData, setPerformanceData] = useState<any[]>([]);
@@ -83,6 +76,82 @@ function DashboardContent() {
     tripsInProgress: 4,
     pendingReviews: 4,
   });
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Add mock bookings data
+  useEffect(() => {
+    const today = new Date();
+    const mockBookings = [
+      {
+        id: '1',
+        title: 'Backyard Paradise - John Smith',
+        start: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0, 0),
+        end: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0, 0),
+        guestName: 'John Smith',
+        guestCount: 4,
+        yardName: 'Backyard Paradise'
+      },
+      {
+        id: '2',
+        title: 'Urban Oasis - Sarah Johnson',
+        start: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 14, 0, 0),
+        end: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 17, 0, 0),
+        guestName: 'Sarah Johnson',
+        guestCount: 6,
+        yardName: 'Urban Oasis'
+      },
+      {
+        id: '3',
+        title: 'Garden Retreat - Mike Brown',
+        start: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 10, 0, 0),
+        end: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 14, 0, 0),
+        guestName: 'Mike Brown',
+        guestCount: 3,
+        yardName: 'Garden Retreat'
+      },
+      {
+        id: '4',
+        title: 'Backyard Paradise - Emma Wilson',
+        start: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2, 15, 0, 0),
+        end: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2, 19, 0, 0),
+        guestName: 'Emma Wilson',
+        guestCount: 8,
+        yardName: 'Backyard Paradise'
+      },
+      {
+        id: '5',
+        title: 'Urban Oasis - David Lee',
+        start: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 3, 12, 0, 0),
+        end: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 3, 16, 0, 0),
+        guestName: 'David Lee',
+        guestCount: 5,
+        yardName: 'Urban Oasis'
+      },
+      {
+        id: '6',
+        title: 'Garden Retreat - Lisa Chen',
+        start: new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1, 11, 0, 0),
+        end: new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1, 15, 0, 0),
+        guestName: 'Lisa Chen',
+        guestCount: 4,
+        yardName: 'Garden Retreat'
+      },
+      {
+        id: '7',
+        title: 'Backyard Paradise - Tom Harris',
+        start: new Date(today.getFullYear(), today.getMonth(), today.getDate() - 2, 13, 0, 0),
+        end: new Date(today.getFullYear(), today.getMonth(), today.getDate() - 2, 17, 0, 0),
+        guestName: 'Tom Harris',
+        guestCount: 6,
+        yardName: 'Backyard Paradise'
+      }
+    ];
+
+    setBookings(mockBookings);
+    setLoading(false);
+  }, []);
 
   // Generate sample performance data
   useEffect(() => {
@@ -125,161 +194,6 @@ function DashboardContent() {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
-  };
-
-  useEffect(() => {
-    const checkCalendarConnection = async () => {
-      try {
-        // First try NextAuth session
-        if (session?.user) {
-          const response = await fetch('/api/auth/google-calendar/status', {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to check calendar status');
-          }
-
-          const data = await response.json();
-          setIsCalendarConnected(data.isConnected);
-          return;
-        }
-
-        // Fallback to Supabase
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          throw new Error('Not authenticated');
-        }
-        
-        setIsCalendarConnected(!!user.user_metadata?.google_calendar_tokens);
-      } catch (error) {
-        console.error('Error checking calendar connection:', error);
-        setSyncMessage({ 
-          type: 'error', 
-          text: 'Failed to check calendar connection status. Please try refreshing the page.' 
-        });
-      }
-    };
-
-    // Only check calendar connection if we have a session
-    if (session?.user || supabase) {
-      checkCalendarConnection();
-    }
-  }, [session, supabase]);
-
-  useEffect(() => {
-    const calendar = searchParams.get('calendar');
-    const error = searchParams.get('error');
-
-    if (calendar === 'connected') {
-      setSyncMessage({ type: 'success', text: 'Google Calendar connected successfully!' });
-      setIsCalendarConnected(true);
-    } else if (error) {
-      setSyncMessage({ type: 'error', text: error });
-    }
-  }, [searchParams]);
-
-  const handleConnectCalendar = async () => {
-    try {
-      // First try NextAuth session
-      if (session?.user) {
-        const response = await fetch('/api/auth/google-calendar', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.error || 'Failed to connect Google Calendar');
-        }
-
-        const data = await response.json();
-        if (!data.url) {
-          throw new Error('No authentication URL received');
-        }
-        window.location.href = data.url;
-        return;
-      }
-
-      // Fallback to Supabase
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('Please sign in to connect your calendar');
-      }
-
-      const response = await fetch('/api/auth/google-calendar');
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to connect Google Calendar');
-      }
-      const data = await response.json();
-      if (!data.url) {
-        throw new Error('No authentication URL received');
-      }
-      window.location.href = data.url;
-    } catch (error) {
-      console.error('Error connecting calendar:', error);
-      setSyncMessage({ 
-        type: 'error', 
-        text: error instanceof Error ? error.message : 'Failed to connect Google Calendar' 
-      });
-    }
-  };
-
-  const handleSyncCalendar = async () => {
-    try {
-      setIsSyncing(true);
-      
-      // First try NextAuth session
-      if (session?.user) {
-        const response = await fetch('/api/calendar/sync', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error);
-
-        setSyncMessage({ 
-          type: 'success', 
-          text: `Successfully synced ${data.addedEvents.length} bookings to Google Calendar` 
-        });
-        return;
-      }
-
-      // Fallback to Supabase
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('Please sign in to sync your calendar');
-      }
-
-      const response = await fetch('/api/calendar/sync', {
-        method: 'POST',
-      });
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.error);
-
-      setSyncMessage({ 
-        type: 'success', 
-        text: `Successfully synced ${data.addedEvents.length} bookings to Google Calendar` 
-      });
-    } catch (error) {
-      console.error('Error syncing calendar:', error);
-      setSyncMessage({ 
-        type: 'error', 
-        text: error instanceof Error ? error.message : 'Failed to sync calendar' 
-      });
-    } finally {
-      setIsSyncing(false);
-    }
   };
 
   return (
@@ -386,84 +300,17 @@ function DashboardContent() {
       </TabPanel>
 
       <TabPanel value={tabValue} index={1}>
-        {/* Calendar Integration Section */}
-        <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">
-              Google Calendar Integration
-            </Typography>
-            {isCalendarConnected ? (
-              <Button
-                variant="outlined"
-                startIcon={<Sync />}
-                onClick={handleSyncCalendar}
-                disabled={isSyncing}
-                sx={{
-                  color: '#3A7D44',
-                  borderColor: '#3A7D44',
-                  '&:hover': {
-                    borderColor: '#2D5F35',
-                    backgroundColor: 'rgba(58, 125, 68, 0.04)',
-                  },
-                }}
-              >
-                {isSyncing ? 'Syncing...' : 'Sync Bookings to Calendar'}
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                startIcon={<Event />}
-                onClick={() => setShowConnectDialog(true)}
-                sx={{
-                  backgroundColor: '#3A7D44',
-                  '&:hover': {
-                    backgroundColor: '#2D5F35',
-                  },
-                }}
-              >
-                Connect Google Calendar
-              </Button>
-            )}
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+            <CircularProgress />
           </Box>
-          {isCalendarConnected && (
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                Your Google Calendar is connected. All confirmed bookings will be automatically synced to your calendar.
-              </Typography>
-            </Paper>
-          )}
-        </Box>
-
-        {/* Today's Stats */}
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          What's happening today
-        </Typography>
-        <Grid container spacing={2} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary">Check-ins</Typography>
-              <Typography variant="h4">{todaysStats.checkIns}</Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary">Check-outs</Typography>
-              <Typography variant="h4">{todaysStats.checkOuts}</Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary">Trips in Progress</Typography>
-              <Typography variant="h4">{todaysStats.tripsInProgress}</Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary">Pending Reviews</Typography>
-              <Typography variant="h4">{todaysStats.pendingReviews}</Typography>
-            </Paper>
-          </Grid>
-        </Grid>
+        ) : error ? (
+          <Alert severity="error">{error}</Alert>
+        ) : (
+          <Box sx={{ height: 'calc(100vh - 300px)', minHeight: '500px' }}>
+            <CustomCalendar bookings={bookings} />
+          </Box>
+        )}
       </TabPanel>
 
       <TabPanel value={tabValue} index={2}>
@@ -483,56 +330,6 @@ function DashboardContent() {
         </Paper>
       </TabPanel>
 
-      {/* Calendar Connection Dialog */}
-      <Dialog
-        open={showConnectDialog}
-        onClose={() => setShowConnectDialog(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Connect Google Calendar</DialogTitle>
-        <DialogContent>
-          <Typography variant="body1" sx={{ mb: 2 }}>
-            Connecting your Google Calendar will:
-          </Typography>
-          <List>
-            <ListItem>
-              <ListItemText 
-                primary="• Automatically add confirmed bookings to your calendar"
-                secondary="Keep track of your yard rentals alongside your other events"
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemText 
-                primary="• Include booking details in calendar events"
-                secondary="View guest information, yard details, and booking times"
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemText 
-                primary="• Set up reminders for check-ins and check-outs"
-                secondary="Never miss a booking with calendar notifications"
-              />
-            </ListItem>
-          </List>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowConnectDialog(false)}>Cancel</Button>
-          <Button
-            onClick={handleConnectCalendar}
-            variant="contained"
-            sx={{
-              backgroundColor: '#3A7D44',
-              '&:hover': {
-                backgroundColor: '#2D5F35',
-              },
-            }}
-          >
-            Connect Calendar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
       {/* Options Menu */}
       <Menu
         anchorEl={anchorEl}
@@ -543,26 +340,9 @@ function DashboardContent() {
         <MenuItem onClick={handleMenuClose}>Share Dashboard</MenuItem>
         <MenuItem onClick={handleMenuClose}>Print View</MenuItem>
       </Menu>
-
-      {/* Success/Error Messages */}
-      <Snackbar
-        open={!!syncMessage}
-        autoHideDuration={6000}
-        onClose={() => setSyncMessage(null)}
-      >
-        <Alert
-          onClose={() => setSyncMessage(null)}
-          severity={syncMessage?.type || 'info'}
-          sx={{ width: '100%' }}
-        >
-          {syncMessage?.text}
-        </Alert>
-      </Snackbar>
     </>
   );
 }
-
-export const dynamic = 'force-dynamic';
 
 export default function HostDashboard() {
   const router = useRouter();

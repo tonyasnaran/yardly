@@ -40,6 +40,9 @@ import SearchBar from '@/components/SearchBar';
 import YardMap from '@/components/YardMap';
 import YardCard from '@/components/YardCard';
 import { supabase } from '@/lib/supabaseClient';
+import { motion } from 'framer-motion';
+import Lottie from 'react-lottie-player';
+import { ParallaxProvider, Parallax } from 'react-scroll-parallax';
 
 // Define the guest limit type
 type GuestLimit = 'Up to 10 guests' | 'Up to 15 guests' | 'Up to 20 guests' | 'Up to 25 guests';
@@ -78,6 +81,204 @@ const GUEST_OPTIONS = [
   { value: '15', label: 'Up to 15 guests' },
   { value: '20', label: 'Up to 20 guests' },
 ];
+
+const HeroSection = () => {
+  const router = useRouter();
+  const [mapPinData, setMapPinData] = useState(null);
+
+  useEffect(() => {
+    // Load map pin animation
+    const loadAnimation = async () => {
+      try {
+        const response = await fetch('/lotties/map pin.json');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const animationData = await response.json();
+        setMapPinData(animationData);
+      } catch (error) {
+        console.error('Error loading animation:', error);
+      }
+    };
+
+    loadAnimation();
+  }, []);
+
+  return (
+    <Box
+      sx={{
+        position: 'relative',
+        height: { xs: '90vh', md: '100vh' },
+        width: '100%',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Video background */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        style={{
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          zIndex: 0,
+        }}
+      >
+        <source src="/videos/9sec Rooftop Stock Video.mp4" type="video/mp4" />
+        <source src="/videos/9sec Rooftop Stock Video WEBM.webm" type="video/webm" />
+      </video>
+
+      {/* Overlay */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          zIndex: 1,
+        }}
+      />
+
+      {/* Main Content */}
+      <Container
+        sx={{
+          position: 'relative',
+          zIndex: 2,
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          color: 'white',
+          gap: { xs: 4, md: 6 },
+          pt: { xs: 4, md: 0 },
+        }}
+      >
+        <Box sx={{ width: '100%', textAlign: 'center' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+          >
+            <Typography
+              variant="h1"
+              sx={{
+                fontSize: { xs: '2.5rem', md: '4rem' },
+                fontWeight: 'bold',
+                textAlign: 'center',
+                mb: 2,
+                color: '#59C36A',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+                letterSpacing: '0.02em',
+                fontFamily: '"Poppins", sans-serif',
+              }}
+            >
+              Find Your Perfect Outdoor Space
+            </Typography>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+          >
+            <Typography
+              variant="h5"
+              sx={{
+                textAlign: 'center',
+                mb: 4,
+                maxWidth: '800px',
+                mx: 'auto',
+                color: 'white',
+                textShadow: '1px 1px 3px rgba(0,0,0,0.4)',
+                letterSpacing: '0.01em',
+                fontFamily: '"Poppins", sans-serif',
+                fontWeight: 500,
+                fontSize: { xs: '1.2rem', md: '1.5rem' },
+                lineHeight: 1.4,
+              }}
+            >
+              Discover and book unique outdoor spaces for your next gathering
+            </Typography>
+          </motion.div>
+        </Box>
+
+        {mapPinData && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.4, ease: 'easeOut' }}
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              width: '100%',
+            }}
+          >
+            <Lottie
+              animationData={mapPinData}
+              play
+              loop
+              style={{ width: 200, height: 200 }}
+            />
+          </motion.div>
+        )}
+
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.6, ease: 'easeOut' }}
+          style={{
+            width: '100%',
+            maxWidth: '900px',
+            margin: '0 auto',
+            padding: '0 16px',
+          }}
+        >
+          <Box
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(8px)',
+                borderRadius: '16px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 1)',
+                },
+                '& fieldset': {
+                  border: 'none',
+                },
+              },
+              '& .MuiInputBase-input': {
+                color: '#333',
+                '&::placeholder': {
+                  color: '#666',
+                  opacity: 1,
+                },
+              },
+              '& .MuiButton-root': {
+                backgroundColor: '#59C36A',
+                color: 'white',
+                borderRadius: '12px',
+                boxShadow: '0 4px 12px rgba(89, 195, 106, 0.3)',
+                '&:hover': {
+                  backgroundColor: '#4BA459',
+                  boxShadow: '0 6px 16px rgba(89, 195, 106, 0.4)',
+                },
+              },
+            }}
+          >
+            <SearchBar />
+          </Box>
+        </motion.div>
+      </Container>
+    </Box>
+  );
+};
 
 export default function Home() {
   const router = useRouter();
@@ -352,158 +553,71 @@ export default function Home() {
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {/* AppBar */}
-      <AppBar position="static" sx={{ bgcolor: '#3A7D44' }}>
-        <Toolbar>
-          {/* Empty toolbar to maintain the green header bar */}
-        </Toolbar>
-      </AppBar>
-
-      {/* Hero Section with Search Bar */}
-      <Box
-        sx={{
-          bgcolor: '#3A7D44',
-          color: 'white',
-          py: { xs: 4, md: 8 },
-          px: { xs: 2, md: 4 },
-          textAlign: 'center',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: { xs: '25vh', sm: '30vh', md: '60vh' },
-          position: 'relative',
-        }}
-      >
+    <ParallaxProvider>
+      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <HeroSection />
+        
+        {/* Map Section */}
         <Container 
-          maxWidth="lg"
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: { xs: 2, md: 4 },
-            py: { xs: 2, md: 4 },
+          maxWidth="xl" 
+          sx={{ 
+            py: { xs: 10, md: 12 },
+            mt: { xs: 4, md: 6 }
           }}
         >
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              maxWidth: '100%',
-            }}
-          >
-            <Typography
-              variant="h1"
-              sx={{
-                fontWeight: 900,
-                fontSize: { xs: '2.2rem', sm: '3rem', md: '4.5rem' },
-                lineHeight: 1.2,
-                letterSpacing: '-0.02em',
-                textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-                whiteSpace: 'nowrap',
-                color: 'white',
-                overflow: 'visible',
-                textOverflow: 'clip',
-                mb: { xs: 2, md: 3 },
-              }}
-            >
-              Your party, their yard
+          <Box sx={{ mb: 6 }}>
+            <Typography variant="h4" gutterBottom sx={{ color: '#3A7D44' }}>
+              Explore Yards Near You
             </Typography>
+            <YardMap
+              yards={yards.filter(yard => yard.lat && yard.lng).map(yard => ({
+                id: yard.id.toString(),
+                name: yard.name,
+                price: yard.price,
+                image_url: yard.image_url,
+                city: yard.city || '',
+                lat: yard.lat!,
+                lng: yard.lng!
+              }))}
+              onMarkerClick={(id) => router.push(`/yards/${id}/book`)}
+            />
+          </Box>
 
-            <Button
-              variant="contained"
-              size="large"
-              onClick={() => router.push('/about')}
-              sx={{
-                bgcolor: 'white',
-                color: '#3A7D44',
-                '&:hover': {
-                  bgcolor: 'rgba(255, 255, 255, 0.9)',
-                },
-                px: { xs: 5, md: 6.5 },
-                py: { xs: 1.5, md: 2.3 },
-                fontSize: { xs: '1rem', md: '1.1rem' },
-                fontWeight: 'bold',
-                borderRadius: '50px',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                mb: { xs: 2, md: 3 },
+          {/* Featured Yards Section */}
+          <Box sx={{ mt: 8, mb: 4 }}>
+            <Typography 
+              variant="h1" 
+              sx={{ 
+                fontSize: { xs: '2rem', sm: '2.5rem' },
+                fontWeight: 600,
+                mb: 4,
+                textAlign: 'center',
+                color: 'text.primary'
               }}
             >
-              Discover How It Works
-            </Button>
-          </Box>
-          
-          {/* Search Bar */}
-          <Box 
-            sx={{ 
-              width: '100%', 
-              maxWidth: 900, 
-              mx: 'auto',
-              mt: { xs: 1, md: 2 },
-            }}
-          >
-            <SearchBar />
+              Featured Yards
+            </Typography>
+            <Grid container spacing={4}>
+              {yards.map((yard) => (
+                <Grid item xs={12} sm={6} md={4} key={yard.id}>
+                  <YardCard
+                    id={yard.id.toString()}
+                    title={yard.name}
+                    description={yard.description}
+                    price={yard.price}
+                    image={yard.image_url}
+                    amenities={yard.amenities || []}
+                    city={yard.city || ''}
+                    guest_limit={yard.guest_limit || 'Up to 10 guests'}
+                    isFavorite={favorites.includes(yard.id.toString())}
+                    onFavoriteToggle={() => handleFavoriteToggle(yard.id.toString())}
+                  />
+                </Grid>
+              ))}
+            </Grid>
           </Box>
         </Container>
       </Box>
-
-      <Container maxWidth="xl" sx={{ py: 8 }}>
-        {/* Map Section */}
-        <Box sx={{ mb: 6 }}>
-          <Typography variant="h4" gutterBottom sx={{ color: '#3A7D44' }}>
-            Explore Yards Near You
-          </Typography>
-          <YardMap
-            yards={yards.filter(yard => yard.lat && yard.lng).map(yard => ({
-              id: yard.id.toString(),
-              name: yard.name,
-              price: yard.price,
-              image_url: yard.image_url,
-              city: yard.city || '',
-              lat: yard.lat!,
-              lng: yard.lng!
-            }))}
-            onMarkerClick={(id) => router.push(`/yards/${id}/book`)}
-          />
-        </Box>
-
-        {/* Featured Yards Section */}
-        <Box sx={{ mt: 8, mb: 4 }}>
-          <Typography 
-            variant="h1" 
-            sx={{ 
-              fontSize: { xs: '2rem', sm: '2.5rem' },
-              fontWeight: 600,
-              mb: 4,
-              textAlign: 'center',
-              color: 'text.primary'
-            }}
-          >
-            Featured Yards
-          </Typography>
-          <Grid container spacing={4}>
-            {yards.map((yard) => (
-              <Grid item xs={12} sm={6} md={4} key={yard.id}>
-                <YardCard
-                  id={yard.id.toString()}
-                  title={yard.name}
-                  description={yard.description}
-                  price={yard.price}
-                  image={yard.image_url}
-                  amenities={yard.amenities || []}
-                  city={yard.city || ''}
-                  guest_limit={yard.guest_limit || 'Up to 10 guests'}
-                  isFavorite={favorites.includes(yard.id.toString())}
-                  onFavoriteToggle={() => handleFavoriteToggle(yard.id.toString())}
-                />
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-      </Container>
-    </Box>
+    </ParallaxProvider>
   );
 } 

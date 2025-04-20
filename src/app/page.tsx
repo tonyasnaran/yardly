@@ -613,22 +613,22 @@ export default function Home() {
             position: 'relative',
             zIndex: 1,
             bgcolor: 'background.default',
-            mt: { xs: '80vh', md: '90vh' },  // Adjust based on hero height
+            mt: { xs: '60vh', md: '70vh' },  // Reduced from 80vh/90vh
           }}
         >
           <Container 
             maxWidth="xl" 
             sx={{ 
-              py: { xs: 10, md: 12 },
+              py: { xs: 6, md: 8 },  // Reduced from 10/12
             }}
           >
-            <Box sx={{ mb: 6 }}>
+            <Box sx={{ mb: 4 }}>  {/* Reduced from mb: 6 */}
               <Typography 
                 variant="h3" 
                 sx={{ 
                   fontSize: { xs: '2rem', sm: '2.5rem' },
                   fontWeight: 600,
-                  mb: 4,
+                  mb: 3,  // Reduced from mb: 4
                   color: '#3A7D44'
                 }}
               >

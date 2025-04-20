@@ -37,13 +37,24 @@ import Image from 'next/image';
 import Group from '@mui/icons-material/Group';
 import LocalActivity from '@mui/icons-material/LocalActivity';
 import SearchBar from '@/components/SearchBar';
-import YardMap from '@/components/YardMap';
-import YardCard from '@/components/YardCard';
+import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabaseClient';
 import { motion } from 'framer-motion';
-import Lottie from 'react-lottie-player';
 import { ParallaxProvider, Parallax } from 'react-scroll-parallax';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import YardCard from '@/components/YardCard';
+
+// Dynamically import components that require browser APIs
+const YardMap = dynamic(() => import('@/components/YardMap'), {
+  ssr: false,
+  loading: () => (
+    <Box sx={{ height: '500px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <CircularProgress />
+    </Box>
+  ),
+});
+
+const Lottie = dynamic(() => import('react-lottie-player'), { ssr: false });
 
 // Define the guest limit type
 type GuestLimit = 'Up to 10 guests' | 'Up to 15 guests' | 'Up to 20 guests' | 'Up to 25 guests';
@@ -86,8 +97,10 @@ const GUEST_OPTIONS = [
 const HeroSection = () => {
   const router = useRouter();
   const [mapPinData, setMapPinData] = useState(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     // Load map pin animation
     const loadAnimation = async () => {
       try {
@@ -105,6 +118,10 @@ const HeroSection = () => {
     loadAnimation();
   }, []);
 
+  if (!isMounted) {
+    return null; // Return null on server-side
+  }
+
   return (
     <Box
       sx={{
@@ -115,22 +132,24 @@ const HeroSection = () => {
       }}
     >
       {/* Video background */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        style={{
-          position: 'absolute',
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          zIndex: 0,
-        }}
-      >
-        <source src="/videos/9sec Rooftop Stock Video.mp4" type="video/mp4" />
-        <source src="/videos/9sec Rooftop Stock Video WEBM.webm" type="video/webm" />
-      </video>
+      {typeof window !== 'undefined' && (
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          style={{
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            zIndex: 0,
+          }}
+        >
+          <source src="/videos/9sec Rooftop Stock Video.mp4" type="video/mp4" />
+          <source src="/videos/9sec Rooftop Stock Video WEBM.webm" type="video/webm" />
+        </video>
+      )}
 
       {/* Overlay */}
       <Box
@@ -273,6 +292,11 @@ export default function Home() {
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [showCityError, setShowCityError] = useState(false);
   const [isLoadingFavorites, setIsLoadingFavorites] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Fetch yards from Supabase
   const fetchYards = async () => {
@@ -516,6 +540,14 @@ export default function Home() {
   const handleYardClick = (yardId: string) => {
     router.push(`/yards/${yardId}`);
   };
+
+  if (!isMounted) {
+    return (
+      <Box sx={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   if (loading) {
     return (

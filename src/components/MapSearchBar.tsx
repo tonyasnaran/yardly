@@ -1,102 +1,103 @@
-import { useEffect, useRef } from 'react';
-import { Box, InputBase, Paper, Typography } from '@mui/material';
+import { useEffect, useRef, useState } from 'react';
+import { Box, InputBase, IconButton } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
 interface MapSearchBarProps {
-  onPlaceSelected: (place: google.maps.places.PlaceResult) => void;
+  onPlaceSelect: (lat: number, lng: number) => void;
 }
 
-export default function MapSearchBar({ onPlaceSelected }: MapSearchBarProps) {
+export default function MapSearchBar({ onPlaceSelect }: MapSearchBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
 
   useEffect(() => {
-    if (!inputRef.current || !window.google) return;
-
-    // Initialize Google Places Autocomplete
-    autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
-      types: ['(cities)'],
-      fields: ['geometry', 'formatted_address'],
-    });
-
-    // Add place_changed event listener
-    autocompleteRef.current.addListener('place_changed', () => {
-      const place = autocompleteRef.current?.getPlace();
-      if (place && place.geometry?.location) {
-        onPlaceSelected(place);
+    const handleGoogleMapsReady = () => {
+      if (window.google?.maps?.places) {
+        setIsGoogleLoaded(true);
       }
-    });
+    };
+
+    // Check if Google Maps is already loaded
+    if (window.google?.maps?.places) {
+      setIsGoogleLoaded(true);
+    }
+
+    // Listen for the custom event from GoogleMapsScript
+    window.addEventListener('google-maps-ready', handleGoogleMapsReady);
 
     return () => {
-      // Cleanup
+      window.removeEventListener('google-maps-ready', handleGoogleMapsReady);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isGoogleLoaded && inputRef.current && !autocompleteRef.current) {
+      try {
+        // Initialize Google Places Autocomplete
+        autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
+          types: ['(cities)'],
+          fields: ['geometry', 'formatted_address'],
+        });
+
+        // Add place_changed event listener
+        autocompleteRef.current.addListener('place_changed', () => {
+          const place = autocompleteRef.current?.getPlace();
+          if (place?.geometry?.location) {
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            onPlaceSelect(lat, lng);
+          }
+        });
+      } catch (error) {
+        console.error('Error initializing Google Places Autocomplete:', error);
+      }
+    }
+
+    return () => {
       if (autocompleteRef.current) {
         google.maps.event.clearInstanceListeners(autocompleteRef.current);
       }
     };
-  }, [onPlaceSelected]);
+  }, [isGoogleLoaded, onPlaceSelect]);
 
   return (
     <Box
       sx={{
         position: 'absolute',
-        top: 32,
-        left: 32,
+        top: 16,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: '90%',
+        maxWidth: '400px',
         zIndex: 1,
-        width: '400px',
         backgroundColor: 'white',
-        borderRadius: 2,
-        padding: '16px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        borderRadius: '8px',
+        boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+        display: 'flex',
+        alignItems: 'center',
       }}
     >
-      <Typography
-        variant="subtitle1"
+      <InputBase
+        inputRef={inputRef}
+        placeholder="Search for a city..."
         sx={{
-          mb: 1.5,
-          color: '#1A1A1A',
-          fontWeight: 500,
-        }}
-      >
-        Search Yards near You
-      </Typography>
-      <Paper
-        elevation={0}
-        sx={{
-          p: '2px 4px',
-          display: 'flex',
-          alignItems: 'center',
-          borderRadius: 2,
-          bgcolor: 'white',
-          border: '1px solid #E0E0E0',
-          '&:hover': {
-            borderColor: '#3A7D44',
+          flex: 1,
+          px: 2,
+          py: 1,
+          '& input': {
+            fontSize: '0.9rem',
           },
         }}
+      />
+      <IconButton
+        sx={{
+          p: '10px',
+          color: '#666',
+        }}
       >
-        <SearchIcon
-          sx={{
-            p: 1,
-            color: '#757575',
-          }}
-        />
-        <InputBase
-          inputRef={inputRef}
-          placeholder="Enter a city..."
-          sx={{
-            ml: 1,
-            flex: 1,
-            '& input': {
-              py: 1.5,
-              fontSize: '1rem',
-              fontWeight: 500,
-              '&::placeholder': {
-                color: '#9E9E9E',
-                opacity: 1,
-              },
-            },
-          }}
-        />
-      </Paper>
+        <SearchIcon />
+      </IconButton>
     </Box>
   );
 } 

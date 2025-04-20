@@ -43,6 +43,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { motion } from 'framer-motion';
 import Lottie from 'react-lottie-player';
 import { ParallaxProvider, Parallax } from 'react-scroll-parallax';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 // Define the guest limit type
 type GuestLimit = 'Up to 10 guests' | 'Up to 15 guests' | 'Up to 20 guests' | 'Up to 25 guests';
@@ -217,6 +218,7 @@ const HeroSection = () => {
               display: 'flex',
               justifyContent: 'center',
               width: '100%',
+              marginBottom: '-40px',
             }}
           >
             <Lottie
@@ -228,53 +230,31 @@ const HeroSection = () => {
           </motion.div>
         )}
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6, ease: 'easeOut' }}
-          style={{
+        {/* Search Bar Section */}
+        <Box
+          sx={{
             width: '100%',
-            maxWidth: '900px',
-            margin: '0 auto',
-            padding: '0 16px',
+            zIndex: 10,
           }}
         >
-          <Box
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(8px)',
-                borderRadius: '16px',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
-                '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 1)',
-                },
-                '& fieldset': {
-                  border: 'none',
-                },
-              },
-              '& .MuiInputBase-input': {
-                color: '#333',
-                '&::placeholder': {
-                  color: '#666',
-                  opacity: 1,
-                },
-              },
-              '& .MuiButton-root': {
-                backgroundColor: '#59C36A',
-                color: 'white',
-                borderRadius: '12px',
-                boxShadow: '0 4px 12px rgba(89, 195, 106, 0.3)',
-                '&:hover': {
-                  backgroundColor: '#4BA459',
-                  boxShadow: '0 6px 16px rgba(89, 195, 106, 0.4)',
-                },
-              },
-            }}
-          >
-            <SearchBar />
-          </Box>
-        </motion.div>
+          <Container maxWidth="lg">
+            <Box
+              sx={{
+                maxWidth: '1000px',
+                mx: 'auto',
+                p: { xs: 2, md: 3 },
+              }}
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.8 }}
+              >
+                <SearchBar />
+              </motion.div>
+            </Box>
+          </Container>
+        </Box>
       </Container>
     </Box>
   );
@@ -282,15 +262,17 @@ const HeroSection = () => {
 
 export default function Home() {
   const router = useRouter();
+  const supabase = createClientComponentClient();
   const { data: session } = useSession();
   const [yards, setYards] = useState<YardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [isLoadingFavorites, setIsLoadingFavorites] = useState(false);
-  const [city, setCity] = useState('');
-  const [selectedGuests, setSelectedGuests] = useState<string[]>([]);
+  const [selectedGuests, setSelectedGuests] = useState<string>('');
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [selectedCity, setSelectedCity] = useState<string>('');
+  const [showCityError, setShowCityError] = useState(false);
+  const [isLoadingFavorites, setIsLoadingFavorites] = useState(false);
 
   // Fetch yards from Supabase
   const fetchYards = async () => {
@@ -460,8 +442,8 @@ export default function Home() {
       
       // Prepare filter parameters
       const filterParams = {
-        city: city || undefined,
-        guests: selectedGuests.length > 0 ? selectedGuests[0] : undefined,
+        city: selectedCity || undefined,
+        guests: selectedGuests || undefined,
         amenities: selectedAmenities.length > 0 ? selectedAmenities : undefined
       };
       
@@ -520,7 +502,7 @@ export default function Home() {
   };
 
   const handleCityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setCity(event.target.value);
+    setSelectedCity(event.target.value);
     // Don't filter immediately on every keystroke, use debounce or call filterYards on blur
   };
 
@@ -566,21 +548,31 @@ export default function Home() {
           }}
         >
           <Box sx={{ mb: 6 }}>
-            <Typography variant="h4" gutterBottom sx={{ color: '#3A7D44' }}>
+            <Typography 
+              variant="h3" 
+              sx={{ 
+                fontSize: { xs: '2rem', sm: '2.5rem' },
+                fontWeight: 600,
+                mb: 4,
+                color: '#3A7D44'
+              }}
+            >
               Explore Yards Near You
             </Typography>
-            <YardMap
-              yards={yards.filter(yard => yard.lat && yard.lng).map(yard => ({
-                id: yard.id.toString(),
-                name: yard.name,
-                price: yard.price,
-                image_url: yard.image_url,
-                city: yard.city || '',
-                lat: yard.lat!,
-                lng: yard.lng!
-              }))}
-              onMarkerClick={(id) => router.push(`/yards/${id}/book`)}
-            />
+            <Box sx={{ height: '500px', width: '100%', borderRadius: '12px', overflow: 'hidden' }}>
+              <YardMap
+                yards={yards.filter(yard => yard.lat && yard.lng).map(yard => ({
+                  id: yard.id.toString(),
+                  name: yard.name,
+                  price: yard.price,
+                  image_url: yard.image_url,
+                  city: yard.city || '',
+                  lat: yard.lat!,
+                  lng: yard.lng!
+                }))}
+                onMarkerClick={(id) => router.push(`/yards/${id}/book`)}
+              />
+            </Box>
           </Box>
 
           {/* Featured Yards Section */}

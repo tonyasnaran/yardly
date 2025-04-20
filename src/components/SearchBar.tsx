@@ -227,7 +227,7 @@ export default function SearchBar() {
           minWidth: { xs: '100%', md: '200px' },
         }}
       >
-        <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#222' }}>
+        <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#222', fontSize: '0.75rem' }}>
           Where
         </Typography>
         <InputBase
@@ -241,7 +241,7 @@ export default function SearchBar() {
               width: '100%',
               border: 'none',
               outline: 'none',
-              fontSize: 'inherit',
+              fontSize: '0.9rem',
               fontFamily: 'inherit',
               color: 'inherit',
               bgcolor: 'transparent',
@@ -267,7 +267,7 @@ export default function SearchBar() {
             width: { xs: '100%', md: 'auto' },
           }}
         >
-          <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#222' }}>
+          <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#222', fontSize: '0.75rem' }}>
             Check in
           </Typography>
           <DateTimePicker
@@ -282,9 +282,12 @@ export default function SearchBar() {
               textField: {
                 variant: 'standard',
                 InputProps: { disableUnderline: true },
-                placeholder: 'Add date & time',
+                placeholder: 'Add date',
                 sx: {
                   width: '100%',
+                  '& .MuiInputBase-input': {
+                    fontSize: '0.9rem',
+                  },
                 },
               },
             }}
@@ -303,7 +306,7 @@ export default function SearchBar() {
             width: { xs: '100%', md: 'auto' },
           }}
         >
-          <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#222' }}>
+          <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#222', fontSize: '0.75rem' }}>
             Check out
           </Typography>
           <DateTimePicker
@@ -318,9 +321,12 @@ export default function SearchBar() {
               textField: {
                 variant: 'standard',
                 InputProps: { disableUnderline: true },
-                placeholder: 'Add date & time',
+                placeholder: 'Add date',
                 sx: {
                   width: '100%',
+                  '& .MuiInputBase-input': {
+                    fontSize: '0.9rem',
+                  },
                 },
               },
             }}
@@ -339,21 +345,30 @@ export default function SearchBar() {
           width: { xs: '100%', md: 'auto' },
         }}
       >
-        <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#222' }}>
+        <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#222', fontSize: '0.75rem' }}>
           Guest Limit
         </Typography>
-        <Button
-          onClick={handleClick}
+        <Box
           sx={{
-            textTransform: 'none',
-            color: 'text.primary',
-            justifyContent: 'flex-start',
-            pl: 0,
-            width: '100%',
+            backgroundColor: '#fff',
+            borderRadius: '30px',
+            padding: '8px 16px',
+            color: '#757575',
+            fontSize: '0.9rem',
+            display: 'flex',
+            alignItems: 'center',
+            cursor: 'pointer',
+            border: '1px solid #ddd',
+            fontFamily: 'inherit',
+            whiteSpace: 'nowrap',
+            '&:hover': {
+              backgroundColor: '#f8f8f8',
+            },
           }}
+          onClick={handleClick}
         >
-          {guests}
-        </Button>
+          Up to 10 Guests
+        </Box>
         <Popover
           open={open}
           anchorEl={anchorEl}
@@ -382,10 +397,16 @@ export default function SearchBar() {
                 sx={{
                   py: 1.5,
                   px: 3,
+                  fontSize: '0.9rem',
                   '&:hover': { backgroundColor: '#f7f7f7' },
                 }}
               >
-                <ListItemText primary={option} />
+                <ListItemText 
+                  primary={option} 
+                  primaryTypographyProps={{
+                    sx: { fontSize: '0.9rem' }
+                  }}
+                />
               </ListItem>
             ))}
           </List>
@@ -407,12 +428,17 @@ export default function SearchBar() {
           sx={{
             width: '100%',
             height: 48,
-            borderRadius: '24px',
-            backgroundColor: '#3A7D44',
+            borderRadius: '30px',
+            backgroundColor: '#59C36A',
+            color: 'white',
+            fontSize: '0.9rem',
+            fontWeight: 500,
+            textTransform: 'none',
             '&:hover': {
-              backgroundColor: '#2D5F35',
+              backgroundColor: '#4BA459',
             },
             px: { xs: 4, md: 3 },
+            boxShadow: '0 2px 8px rgba(89, 195, 106, 0.3)',
           }}
         >
           Search

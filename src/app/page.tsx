@@ -543,7 +543,20 @@ export default function Home() {
 
   if (!isMounted) {
     return (
-      <Box sx={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <Box 
+        sx={{ 
+          height: '100vh', 
+          width: '100%',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          bgcolor: 'background.default',
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          zIndex: 9999
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -551,10 +564,24 @@ export default function Home() {
 
   if (loading) {
     return (
-      <Container sx={{ py: 8, textAlign: 'center' }}>
+      <Box 
+        sx={{ 
+          height: '100vh', 
+          width: '100%',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          bgcolor: 'background.default',
+          display: 'flex', 
+          flexDirection: 'column',
+          justifyContent: 'center', 
+          alignItems: 'center',
+          zIndex: 9999
+        }}
+      >
         <CircularProgress />
         <Typography sx={{ mt: 2 }}>Loading yards...</Typography>
-      </Container>
+      </Box>
     );
   }
 
@@ -568,79 +595,103 @@ export default function Home() {
 
   return (
     <ParallaxProvider>
-      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          minHeight: '100vh',
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+      >
         <HeroSection />
         
         {/* Map Section */}
-        <Container 
-          maxWidth="xl" 
-          sx={{ 
-            py: { xs: 10, md: 12 },
-            mt: { xs: 4, md: 6 }
+        <Box
+          component="section"
+          sx={{
+            position: 'relative',
+            zIndex: 1,
+            bgcolor: 'background.default',
+            mt: { xs: '80vh', md: '90vh' },  // Adjust based on hero height
           }}
         >
-          <Box sx={{ mb: 6 }}>
-            <Typography 
-              variant="h3" 
-              sx={{ 
-                fontSize: { xs: '2rem', sm: '2.5rem' },
-                fontWeight: 600,
-                mb: 4,
-                color: '#3A7D44'
-              }}
-            >
-              Explore Yards Near You
-            </Typography>
-            <Box sx={{ height: '500px', width: '100%', borderRadius: '12px', overflow: 'hidden' }}>
-              <YardMap
-                yards={yards.filter(yard => yard.lat && yard.lng).map(yard => ({
-                  id: yard.id.toString(),
-                  name: yard.name,
-                  price: yard.price,
-                  image_url: yard.image_url,
-                  city: yard.city || '',
-                  lat: yard.lat!,
-                  lng: yard.lng!
-                }))}
-                onMarkerClick={(id) => router.push(`/yards/${id}/book`)}
-              />
+          <Container 
+            maxWidth="xl" 
+            sx={{ 
+              py: { xs: 10, md: 12 },
+            }}
+          >
+            <Box sx={{ mb: 6 }}>
+              <Typography 
+                variant="h3" 
+                sx={{ 
+                  fontSize: { xs: '2rem', sm: '2.5rem' },
+                  fontWeight: 600,
+                  mb: 4,
+                  color: '#3A7D44'
+                }}
+              >
+                Explore Yards Near You
+              </Typography>
+              <Box sx={{ 
+                height: '500px', 
+                width: '100%', 
+                borderRadius: '12px', 
+                overflow: 'hidden',
+                bgcolor: 'background.paper',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+              }}>
+                <YardMap
+                  yards={yards.filter(yard => yard.lat && yard.lng).map(yard => ({
+                    id: yard.id.toString(),
+                    name: yard.name,
+                    price: yard.price,
+                    image_url: yard.image_url,
+                    city: yard.city || '',
+                    lat: yard.lat!,
+                    lng: yard.lng!
+                  }))}
+                  onMarkerClick={(id) => router.push(`/yards/${id}/book`)}
+                />
+              </Box>
             </Box>
-          </Box>
 
-          {/* Featured Yards Section */}
-          <Box sx={{ mt: 8, mb: 4 }}>
-            <Typography 
-              variant="h1" 
-              sx={{ 
-                fontSize: { xs: '2rem', sm: '2.5rem' },
-                fontWeight: 600,
-                mb: 4,
-                textAlign: 'center',
-                color: 'text.primary'
-              }}
-            >
-              Featured Yards
-            </Typography>
-            <Grid container spacing={4}>
-              {yards.map((yard) => (
-                <Grid item xs={12} sm={6} md={4} key={yard.id}>
-                  <YardCard
-                    id={yard.id.toString()}
-                    title={yard.name}
-                    description={yard.description}
-                    price={yard.price}
-                    image={yard.image_url}
-                    amenities={yard.amenities || []}
-                    city={yard.city || ''}
-                    guest_limit={yard.guest_limit || 'Up to 10 guests'}
-                    isFavorite={favorites.includes(yard.id.toString())}
-                    onFavoriteToggle={() => handleFavoriteToggle(yard.id.toString())}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        </Container>
+            {/* Featured Yards Section */}
+            <Box sx={{ mt: 8, mb: 4 }}>
+              <Typography 
+                variant="h1" 
+                sx={{ 
+                  fontSize: { xs: '2rem', sm: '2.5rem' },
+                  fontWeight: 600,
+                  mb: 4,
+                  textAlign: 'center',
+                  color: 'text.primary'
+                }}
+              >
+                Featured Yards
+              </Typography>
+              <Grid container spacing={4}>
+                {yards.map((yard) => (
+                  <Grid item xs={12} sm={6} md={4} key={yard.id}>
+                    <YardCard
+                      id={yard.id.toString()}
+                      title={yard.name}
+                      description={yard.description}
+                      price={yard.price}
+                      image={yard.image_url}
+                      amenities={yard.amenities || []}
+                      city={yard.city || ''}
+                      guest_limit={yard.guest_limit || 'Up to 10 guests'}
+                      isFavorite={favorites.includes(yard.id.toString())}
+                      onFavoriteToggle={() => handleFavoriteToggle(yard.id.toString())}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+          </Container>
+        </Box>
       </Box>
     </ParallaxProvider>
   );

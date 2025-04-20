@@ -101,7 +101,6 @@ const HeroSection = () => {
 
   useEffect(() => {
     setIsMounted(true);
-    // Load map pin animation
     const loadAnimation = async () => {
       try {
         const response = await fetch('/lotties/map pin.json');
@@ -119,19 +118,18 @@ const HeroSection = () => {
   }, []);
 
   if (!isMounted) {
-    return null; // Return null on server-side
+    return null;
   }
 
   return (
     <Box
       sx={{
         position: 'relative',
-        height: { xs: '90vh', md: '100vh' },
+        height: { xs: '70vh', md: '80vh' },  // Reduced from 90vh/100vh
         width: '100%',
         overflow: 'hidden',
       }}
     >
-      {/* Video background */}
       {typeof window !== 'undefined' && (
         <video
           autoPlay
@@ -151,7 +149,6 @@ const HeroSection = () => {
         </video>
       )}
 
-      {/* Overlay */}
       <Box
         sx={{
           position: 'absolute',
@@ -164,7 +161,6 @@ const HeroSection = () => {
         }}
       />
 
-      {/* Main Content */}
       <Container
         sx={{
           position: 'relative',
@@ -174,8 +170,7 @@ const HeroSection = () => {
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
-          color: 'white',
-          gap: { xs: 4, md: 6 },
+          gap: { xs: 3, md: 4 },
           pt: { xs: 4, md: 0 },
         }}
       >
@@ -249,7 +244,6 @@ const HeroSection = () => {
           </motion.div>
         )}
 
-        {/* Search Bar Section */}
         <Box
           sx={{
             width: '100%',
@@ -613,22 +607,23 @@ export default function Home() {
             position: 'relative',
             zIndex: 1,
             bgcolor: 'background.default',
-            mt: { xs: '60vh', md: '70vh' },  // Reduced from 80vh/90vh
+            mt: { xs: '40vh', md: '50vh' },  // Further reduced from 60vh/70vh
           }}
         >
           <Container 
             maxWidth="xl" 
             sx={{ 
-              py: { xs: 6, md: 8 },  // Reduced from 10/12
+              pt: { xs: 4, md: 6 },  // Reduced from 6/8
+              pb: { xs: 6, md: 8 },
             }}
           >
-            <Box sx={{ mb: 4 }}>  {/* Reduced from mb: 6 */}
+            <Box sx={{ mb: 3 }}>  {/* Reduced from mb: 4 */}
               <Typography 
                 variant="h3" 
                 sx={{ 
                   fontSize: { xs: '2rem', sm: '2.5rem' },
                   fontWeight: 600,
-                  mb: 3,  // Reduced from mb: 4
+                  mb: 2,  // Reduced from mb: 3
                   color: '#3A7D44'
                 }}
               >

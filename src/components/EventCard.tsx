@@ -1,111 +1,88 @@
 'use client';
 
-import { Card, CardContent, CardMedia, Typography, Box, Chip } from '@mui/material';
-import { motion } from 'framer-motion';
+import { Card, CardContent, Typography, Box, Button } from '@mui/material';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { Event } from '@/data/events';
 
 interface EventCardProps {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  image: string;
-  location: string;
+  event: Event;
 }
 
-export default function EventCard({ id, title, description, date, image, location }: EventCardProps) {
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+};
+
+export default function EventCard({ event }: EventCardProps) {
   const router = useRouter();
 
-  const handleClick = () => {
-    router.push(`/events/${id}`);
+  const handleCardClick = () => {
+    router.push(`/events/${event.id}`);
+  };
+
+  const handleLearnMoreClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(`/events/${event.id}`);
   };
 
   return (
-    <motion.div
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.2 }}
+    <Card
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        transition: 'transform 0.2s',
+        cursor: 'pointer',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: 3
+        },
+      }}
+      onClick={handleCardClick}
     >
-      <Card
-        onClick={handleClick}
-        sx={{
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          cursor: 'pointer',
-          borderRadius: '16px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-          transition: 'transform 0.2s ease-in-out',
-          '&:hover': {
-            transform: 'translateY(-4px)',
-          },
-        }}
-      >
-        <CardMedia
-          component="img"
-          height="200"
-          image={image}
-          alt={title}
-          sx={{
-            objectFit: 'cover',
-            borderTopLeftRadius: '16px',
-            borderTopRightRadius: '16px',
-          }}
+      <Box sx={{ position: 'relative', height: 200 }}>
+        <Image
+          src={event.image_url}
+          alt={event.name}
+          fill
+          style={{ objectFit: 'cover' }}
         />
-        <CardContent sx={{ flexGrow: 1, p: 3 }}>
-          <Box sx={{ mb: 2 }}>
-            <Chip
-              label={date}
-              size="small"
-              sx={{
-                backgroundColor: '#3A7D44',
-                color: 'white',
-                fontWeight: 600,
-                mb: 1,
-              }}
-            />
-          </Box>
-          <Typography
-            gutterBottom
-            variant="h5"
-            component="h2"
+      </Box>
+      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+        <Typography variant="h6" component="h3" gutterBottom>
+          {event.name}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" gutterBottom>
+          {formatDate(event.date)}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          {event.location}
+        </Typography>
+        <Box sx={{ mt: 'auto' }}>
+          <Button
+            variant="contained"
+            onClick={handleLearnMoreClick}
             sx={{
-              fontWeight: 600,
-              color: '#1a1a1a',
-              mb: 1,
-              fontSize: { xs: '1.1rem', sm: '1.25rem' },
+              bgcolor: '#3A7D44',
+              '&:hover': {
+                bgcolor: '#2D5F35',
+              },
+              textTransform: 'none',
+              width: '100%'
             }}
           >
-            {title}
-          </Typography>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{
-              mb: 2,
-              display: '-webkit-box',
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              fontSize: '0.9rem',
-            }}
-          >
-            {description}
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: '#3A7D44',
-              fontWeight: 500,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.5,
-            }}
-          >
-            📍 {location}
-          </Typography>
-        </CardContent>
-      </Card>
-    </motion.div>
+            Learn More
+          </Button>
+        </Box>
+      </CardContent>
+    </Card>
   );
 } 

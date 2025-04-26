@@ -120,3 +120,8 @@ warning: in the working copy of 'tsconfig.json', LF will be replaced by CRLF the
    },[m
    "include": [[m
      "next-env.d.ts",[m
+[33mcommit d767450ac10f3b0456226a256da788c2199ff2b4[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: tonyasnaran <tonyfasnaran@gmail.com>
+Date:   Fri Apr 25 20:46:45 2025 -0700
+
+    feat: implement search functionality with URL parameters and results page

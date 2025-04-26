@@ -43,6 +43,8 @@ import { motion } from 'framer-motion';
 import { ParallaxProvider, Parallax } from 'react-scroll-parallax';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import YardCard from '@/components/YardCard';
+import EventCard from '@/components/EventCard';
+import { events } from '@/data/events';
 
 // Dynamically import components that require browser APIs
 const YardMap = dynamic(() => import('@/components/YardMap'), {
@@ -600,6 +602,38 @@ export default function Home() {
       >
         <HeroSection />
         
+        {/* Events Section */}
+        <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: 'background.default' }}>
+          <Container maxWidth="xl">
+            <Typography
+              variant="h3"
+              sx={{
+                mb: 6,
+                textAlign: 'center',
+                color: '#3A7D44',
+                fontWeight: 700,
+                fontSize: { xs: '2rem', md: '2.5rem' },
+              }}
+            >
+              Upcoming Events
+            </Typography>
+            <Grid container spacing={4}>
+              {events.map((event) => (
+                <Grid item xs={12} sm={6} md={4} key={event.id}>
+                  <EventCard
+                    id={event.id}
+                    title={event.title}
+                    description={event.description}
+                    date={event.date}
+                    image={event.image}
+                    location={event.location}
+                  />
+                </Grid>
+              ))}
+            </Grid>
+          </Container>
+        </Box>
+
         {/* Map Section */}
         <Box
           component="section"

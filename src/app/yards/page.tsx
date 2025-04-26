@@ -8,7 +8,6 @@ import YardCard from '@/components/YardCard';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 interface YardData {
   id: number;

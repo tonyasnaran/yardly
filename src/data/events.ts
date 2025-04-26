@@ -1,3 +1,11 @@
+export interface Host {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  avatar_url?: string;
+}
+
 export interface Event {
   id: string;
   name: string;
@@ -5,7 +13,7 @@ export interface Event {
   date: string;
   location: string;
   image_url: string;
-  host_name?: string;
+  hosts: Host[];
   created_at: string;
   updated_at: string;
 }
@@ -18,7 +26,14 @@ export const events: Event[] = [
     date: '2024-05-15T10:00:00',
     location: 'Central Park Community Garden',
     image_url: '/images/events/garden-workshop.jpg',
-    host_name: 'Green Thumb Collective',
+    hosts: [
+      {
+        id: 'h1',
+        name: 'Green Thumb Collective',
+        email: 'contact@greenthumb.org',
+        avatar_url: '/images/hosts/green-thumb.jpg'
+      }
+    ],
     created_at: '2024-04-01T00:00:00',
     updated_at: '2024-04-01T00:00:00'
   },
@@ -29,7 +44,14 @@ export const events: Event[] = [
     date: '2024-06-01T09:00:00',
     location: 'Downtown Market Square',
     image_url: '/images/events/yard-sale.jpg',
-    host_name: 'Downtown Business Association',
+    hosts: [
+      {
+        id: 'h2',
+        name: 'Downtown Business Association',
+        email: 'events@downtown.org',
+        avatar_url: '/images/hosts/dba.jpg'
+      }
+    ],
     created_at: '2024-04-01T00:00:00',
     updated_at: '2024-04-01T00:00:00'
   },
@@ -40,7 +62,14 @@ export const events: Event[] = [
     date: '2024-07-15T20:00:00',
     location: 'Riverside Park',
     image_url: '/images/events/movie-night.jpg',
-    host_name: 'Parks and Recreation Department',
+    hosts: [
+      {
+        id: 'h3',
+        name: 'Parks and Recreation Department',
+        email: 'parks@city.gov',
+        avatar_url: '/images/hosts/parks-rec.jpg'
+      }
+    ],
     created_at: '2024-04-01T00:00:00',
     updated_at: '2024-04-01T00:00:00'
   }

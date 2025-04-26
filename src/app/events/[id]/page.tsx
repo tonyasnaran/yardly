@@ -4,12 +4,15 @@ import EventMap from '@/components/EventMap';
 import ContactHostModal from '@/components/ContactHostModal';
 import { getEventById } from '@/lib/supabase/events';
 import { notFound } from 'next/navigation';
+import dynamic from 'next/dynamic';
 
 interface EventDetailPageProps {
   params: {
     id: string;
   };
 }
+
+const ContactHostButton = dynamic(() => import('@/components/ContactHostButton'), { ssr: false });
 
 export default async function EventDetailPage({ params }: EventDetailPageProps) {
   const eventData = await getEventById(params.id);
@@ -194,21 +197,8 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                   </Box>
                 </Box>
               ))}
-              <Button
-                variant="contained"
-                fullWidth
-                sx={{
-                  mt: 2,
-                  bgcolor: '#3A7D44',
-                  '&:hover': { bgcolor: '#2D5F35' },
-                  py: 1.5,
-                  textTransform: 'none',
-                  fontSize: '1rem',
-                  borderRadius: 2,
-                }}
-              >
-                Contact the Host
-              </Button>
+              {/* Contact Host Button (Client Component) */}
+              <ContactHostButton />
             </Paper>
           </Grid>
         </Grid>

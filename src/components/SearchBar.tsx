@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import {
   Paper,
   InputBase,
@@ -42,7 +42,7 @@ declare global {
   }
 }
 
-export default function SearchBar() {
+function SearchBarContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -477,5 +477,17 @@ export default function SearchBar() {
         </Typography>
       )}
     </Paper>
+  );
+}
+
+export default function SearchBar() {
+  return (
+    <Suspense fallback={
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100px' }}>
+        <CircularProgress />
+      </Box>
+    }>
+      <SearchBarContent />
+    </Suspense>
   );
 } 

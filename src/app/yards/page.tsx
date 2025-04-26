@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Box, Container, Typography, Grid, CircularProgress } from '@mui/material';
 import { useSearchParams } from 'next/navigation';
 import SearchBar from '@/components/SearchBar';
 import YardCard from '@/components/YardCard';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 interface YardData {
   id: number;
@@ -23,7 +26,7 @@ interface YardData {
   created_at: string;
 }
 
-export default function YardsPage() {
+function YardsContent() {
   const searchParams = useSearchParams();
   const supabase = createClientComponentClient();
   const [yards, setYards] = useState<YardData[]>([]);
@@ -138,5 +141,17 @@ export default function YardsPage() {
         )}
       </Container>
     </Box>
+  );
+}
+
+export default function YardsPage() {
+  return (
+    <Suspense fallback={
+      <Box sx={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <CircularProgress />
+      </Box>
+    }>
+      <YardsContent />
+    </Suspense>
   );
 } 

@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import DatePickerProvider from './DatePickerProvider';
 import { format } from 'date-fns';
 
@@ -44,10 +44,21 @@ declare global {
 
 export default function SearchBar() {
   const router = useRouter();
-  const [city, setCity] = useState('');
-  const [checkIn, setCheckIn] = useState<Date | null>(null);
-  const [checkOut, setCheckOut] = useState<Date | null>(null);
-  const [guests, setGuests] = useState(GUEST_OPTIONS[0]);
+  const searchParams = useSearchParams();
+  
+  // Initialize state from URL parameters
+  const [city, setCity] = useState(searchParams.get('city') || '');
+  const [checkIn, setCheckIn] = useState<Date | null>(
+    searchParams.get('checkIn') ? new Date(searchParams.get('checkIn')!) : null
+  );
+  const [checkOut, setCheckOut] = useState<Date | null>(
+    searchParams.get('checkOut') ? new Date(searchParams.get('checkOut')!) : null
+  );
+  const [guests, setGuests] = useState(
+    searchParams.get('guests') 
+      ? `Up to ${searchParams.get('guests')} Guests`
+      : GUEST_OPTIONS[0]
+  );
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [placesLoaded, setPlacesLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -186,13 +197,18 @@ export default function SearchBar() {
       return;
     }
 
+    // Extract number from "Up to X Guests"
+    const guestNumber = guests.split(' ')[2];
+
+    // Create URL parameters
     const params = new URLSearchParams();
     params.append('city', city);
     params.append('checkIn', checkIn!.toISOString());
     params.append('checkOut', checkOut!.toISOString());
-    params.append('guests', guests.split(' ')[2]); // Extract number from "Up to X Guests"
+    params.append('guests', guestNumber);
 
-    router.push(`/yards/results?${params.toString()}`);
+    // Navigate to yards page with search parameters
+    router.push(`/yards?${params.toString()}`);
   };
 
   const open = Boolean(anchorEl);
@@ -367,7 +383,7 @@ export default function SearchBar() {
           }}
           onClick={handleClick}
         >
-          Up to 10 Guests
+          {guests}
         </Box>
         <Popover
           open={open}
